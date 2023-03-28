@@ -1,6 +1,7 @@
 import threading
 
 from udp_server import UDPCommandServer
+from state_machine import state_machine
 
 UNIX_SOCK_PIPE_PATH_COMMAND_CLIENT = "/tmp/unixsock_command_client.sock"
 UNIX_SOCK_PIPE_PATH_COMMAND_SERVER = "/tmp/unixsock_command_server.sock"
@@ -12,6 +13,8 @@ COMMAND_PORT = 9999
 STATUS_PORT = 9998
 
 if __name__ == '__main__':
+    state_machine.run()
+
     command_server = UDPCommandServer(UNIX_SOCK_PIPE_PATH_COMMAND_SERVER,
                                       UNIX_SOCK_PIPE_PATH_COMMAND_CLIENT,
                                       COMMAND_PORT)

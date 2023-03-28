@@ -50,7 +50,7 @@ class UDPServer:
         while True:
             msg, addr = self.server.recvfrom(1024)
             header = msg[0:4].decode("utf-8")
-            print(msg)
+            # print(msg)
             if header == "COOK":  # 判断数据包header，如果是COOK，表示为数据包开头，如果不是，则继续
                 length = struct.unpack(">I", msg[4:8])[0]
                 data = msg[8:8 + length]
