@@ -40,6 +40,7 @@ class CommandHandler:
             self._multiple_command_handle()
         else:
             self._plc_instruction_handle()
+        state_machine.start()
 
     def _single_command_handle(self):
         data_type, data_target, data_action, data_measures, data_measure_left, data_measure_right, data_measure_1, \
@@ -61,7 +62,6 @@ class CommandHandler:
         else:
             print("wrong type")
             return
-        state_machine.start()
 
     def _multiple_command_handle(self):
         pass
@@ -94,8 +94,9 @@ class CommandHandler:
             r_setting(data_measure_left, data_measure_right, execute_time=data_time)
         elif data_type == b"\x53":
             shake_setting(data_measure_left, data_measure_right, execute_time=data_time)
+        elif data_type == b"\x54":
+            temperature_setting(data_measure_left, data_measure_right, execute_time=data_time)
 
         else:
             print("wrong type")
             return
-        state_machine.start()

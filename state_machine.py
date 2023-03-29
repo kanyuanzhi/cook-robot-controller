@@ -26,9 +26,15 @@ class StateMachine:
 
         self.machine_status = "idle"  # running/pause/idle
         self.execute_time = 0
+
+        self.r_state = {  # R轴状态
+            "running": 0,  # 0停止，1旋转
+            "mode": 0  # 0默认，1正转，2反转，3正反转
+        }
         print(self.__class__.__name__)
 
     def add_state(self, signal, execute_time):
+        execute_time *= 10
         if self.machine_status != "idle":
             print("machine is busy now!")
             return False
@@ -43,17 +49,24 @@ class StateMachine:
     def check_state(self):  # 检查状态，当前是否有任务在运行
         pass
 
+    def get_r_state(self):
+        return self.r_state
+
+    def set_r_state(self, running, mode):
+        self.r_state["running"] = running
+        self.r_state["mode"] = mode
+
     def set_initial_time(self):
         self.initial_time = int(time.time())
 
     def execute(self):
         if self.machine_status == "running":
             current_time = time.time()
-            self.execute_time = int(int(current_time * 1000 - self.initial_time * 1000) / 1000)
+            self.execute_time = int(int(current_time * 1000 - self.initial_time * 1000) / 100)
             if self.execute_time in self.state_is_finished and self.state_is_finished[self.execute_time] is False:
                 self.state_is_finished[self.execute_time] = True
                 for signal in self.states[self.execute_time]:
-                    print("{}:指令{}，执行时刻{}".format(time.time(), signal, self.execute_time))
+                    print("{}:指令{}，执行时刻{}".format(time.time(), signal, self.execute_time / 10))
                     # rtu.write_register(signal)
                     # t1 = threading.Thread(target=xj_rtu.write_register, args=(signal,))
                     # t1.start()
@@ -63,6 +76,7 @@ class StateMachine:
                         self.machine_status = "idle"
                         self.states = {}
                         self.state_is_finished = {}
+                        self.set_r_state(0, 0)
                         print("执行完毕")
                         print("*" * 50)
 
@@ -87,7 +101,7 @@ class StateMachine:
         self.machine_status = "pause"
 
     def run(self):
-        self.apscheduler.add_job(self.execute, args=(), trigger="interval", seconds=0.01)
+        self.apscheduler.add_job(self.execute, args=(), trigger="interval", seconds=0.001)
         # self.apscheduler.add_job(self.read, trigger="interval", seconds=0.2)
         self.apscheduler.start()
 
