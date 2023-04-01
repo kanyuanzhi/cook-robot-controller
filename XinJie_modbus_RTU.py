@@ -8,7 +8,7 @@ import struct
 import configparser
 
 
-class modbus_RTU_communication():
+class xj_modbus_RTU_communication():
     def __init__(self):
         self.ser = self.config_ser()
 
@@ -147,7 +147,7 @@ class modbus_RTU_communication():
         if len(datas) == 0:
             pass
         else:
-            salveNum = b'02'  # 站号；0x表示十六进制的int型变量，\x表示十六进制的字符型变量
+            salveNum = b'01'  # 站号；0x表示十六进制的int型变量，\x表示十六进制的字符型变量
             # print('0x{:02X}'.format(int(salveNum)))
             order = b'06'  # 功能码，单个寄存器写，暂时没有同时写多个寄存器
 
@@ -198,18 +198,17 @@ class modbus_RTU_communication():
         return Flag
 
 
-xj_rtu = modbus_RTU_communication()
+xj_rtu = xj_modbus_RTU_communication()
 
 if __name__ == '__main__':
-    p = modbus_RTU_communication()
-    ser = p.ser
+    ser = xj_rtu.ser
     if ser != False:
         # 从数据寄存器D100开始读取，读取3个寄存器的值（16位整数格式）
         dataRead = [['D1', 1], ['HD123', 2]]
-        resultRead = p.read_register(dataRead)
+        resultRead = xj_rtu.read_register(dataRead)
 
         # 向数据寄存器D100开始3个寄存器，写入值（16位整数格式）
         dataWrite = [['D100', 1], ['HD101', 2], ['D102', 3]]
-        p.write_register(dataWrite)
+        xj_rtu.write_register(dataWrite)
 
         ser.close()

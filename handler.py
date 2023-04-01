@@ -35,16 +35,17 @@ class CommandHandler:
         self.data_instruction_count = struct.unpack(">H", data[8:10])[0]
         self.data_content = data[14:14 + self.data_instruction_count * 14]
         if self.data_model == b"\x01":
-            self._single_command_handle()
+            self._single_command_handle(self.data_content)  # data_content大小 14
         elif self.data_model == b"\x02":
-            self._multiple_command_handle()
+            self._multiple_command_handle(self.data_content)  # data_content大小 14*n
         else:
-            self._plc_instruction_handle()
+            self._plc_instruction_handle(self.data_content)  # data_content大小 14
         state_machine.start()
 
-    def _single_command_handle(self):
+    @staticmethod
+    def _single_command_handle(data_content):
         data_type, data_target, data_action, data_measures, data_measure_left, data_measure_right, data_measure_1, \
-        data_measure_2, data_measure_3, data_measure_4, data_time = unpack_single_instruction(self.data_content)
+        data_measure_2, data_measure_3, data_measure_4, data_time = unpack_single_instruction(data_content)
         if data_type == b"\x01":
             ingredient_control(data_target, execute_time=data_time)
         elif data_type == b"\x02":
@@ -63,12 +64,14 @@ class CommandHandler:
             print("wrong type")
             return
 
-    def _multiple_command_handle(self):
-        pass
+    def _multiple_command_handle(self, data_content):
+        for i in range(self.data_instruction_count):
+            self._single_command_handle(data_content[14 * i:14 * i + 14])
 
-    def _plc_instruction_handle(self):
+    @staticmethod
+    def _plc_instruction_handle(data_content):
         data_type, data_target, data_action, data_measures, data_measure_left, data_measure_right, data_measure_1, \
-        data_measure_2, data_measure_3, data_measure_4, data_time = unpack_single_instruction(self.data_content)
+        data_measure_2, data_measure_3, data_measure_4, data_time = unpack_single_instruction(data_content)
         if data_type == b"\x20":
             x_control(data_action, data_target, execute_time=data_time)
         elif data_type == b"\x21":

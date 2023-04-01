@@ -71,8 +71,10 @@ class UDPCommandServer(UDPServer):
         command_handler = CommandHandler()
         if data_header == "CCS":  # 接收指令
             # 执行指令，将用户型命令转为一系列PLC型命令或直接处理PLC型指令，查表后写到PLC对应地址
-            command_handler.handle(data)
-
+            try:
+                command_handler.handle(data)
+            except Exception as e:
+                print(e.args)
             packer.pack("CCR", b"\x01")  # 返回开始执行指令的信号
         elif data_header == "CIS":  # 接收查询信息，并依据data[7]的值区分查询内容
             if data[7] == 1:  # 查询指令是否可以执行

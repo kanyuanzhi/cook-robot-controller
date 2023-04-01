@@ -9,7 +9,7 @@ import time
 import configparser
 
 
-class modbus_RTU_communication():
+class fx_modbus_RTU_communication():
     def __init__(self):
         self.ser = self.config_ser()
 
@@ -189,7 +189,7 @@ class modbus_RTU_communication():
         return Flag
 
 
-sl_rtu = modbus_RTU_communication()
+sl_rtu = fx_modbus_RTU_communication()
 
 if __name__ == '__main__':
     ser = sl_rtu.ser
