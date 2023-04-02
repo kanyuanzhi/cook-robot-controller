@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 from binascii import *
-import crcmod  # crcmod为专门用于crc校验的库
+import crcmod #crcmod为专门用于crc校验的库
 import serial
 import os
 import struct
+import time
 import configparser
 
-
-class xj_modbus_RTU_communication():
+class modbus_RTU_communication():
     def __init__(self):
         self.ser = self.config_ser()
 
@@ -56,8 +56,8 @@ class xj_modbus_RTU_communication():
             str_list.insert(2, '0')  # 位数不足补0，因为一般最少是5个
         crc_data = "".join(str_list)  # 用""把数组的每一位结合起来  组成新的字符串
         # print(crc_data)
-        read = read.strip() + crc_data[4:] + crc_data[2:4]  # 把源代码和crc校验码连接起来
-        CRC16 = crc_data[4:] + crc_data[2:4]  # 单纯的CRC校验码，已经将高低字节调换
+        read = read.strip() + crc_data[4:] + crc_data[2:4]# 把源代码和crc校验码连接起来
+        CRC16 = crc_data[4:] + crc_data[2:4]#单纯的CRC校验码，已经将高低字节调换
         # print('CRC16校验:', crc_data[4:] + ' ' + crc_data[2:4])
         # print(read)
         return CRC16
@@ -73,39 +73,39 @@ class xj_modbus_RTU_communication():
         if len(datas) == 0:
             pass
         else:
-            salveNum = b'02'  # 站号；0x表示十六进制的int型变量，\x表示十六进制的字符型变量
+            salveNum = b'02'#站号；0x表示十六进制的int型变量，\x表示十六进制的字符型变量
             # print('0x{:02X}'.format(int(salveNum)))
-            order = b'03'  # 功能码，寄存器读
-            result = []  # 读取的返回结果，以[[D0, value0], [D1, value1]...]给出
+            order = b'03'#功能码，寄存器读
+            result = []#读取的返回结果，以[[D0, value0], [D1, value1]...]给出
 
             for data in datas:
                 resultSingle = []
                 modle = data[0][0].upper()
 
-                registerNum = int(data[1])  # 读取的寄存器个数
+                registerNum = int(data[1])#读取的寄存器个数
                 registerNumhex = hex(registerNum)[2:].zfill(4)
                 registerNumhex = (registerNumhex.upper()).encode('UTF-8')
 
-                if modle == 'D':  # D寄存器对应modbus地址十进制0~20479，十六进制0~4FFF
+                if modle == 'D':#D寄存器对应modbus地址十进制0~20479，十六进制0~4FFF
                     num = int(data[0][1:])  # 寄存器的十进制编号
                     address = hex(num)[2:].zfill(4)  # 将num转换为4位16进制表示
                     address = (address.upper()).encode('UTF-8')
 
-                elif modle == 'H':  # HD寄存器对应modbus地址十进制41088~47231，十六进制A080~B87F
+                elif modle == 'H':#HD寄存器对应modbus地址十进制41088~47231，十六进制A080~B87F
                     num = int(data[0][2:])  # 寄存器的十进制编号
-                    address = hex(num + 41088)[2:].zfill(4)  # 将num转换为4位16进制表示
+                    address = hex(num+41088)[2:].zfill(4)  # 将num转换为4位16进制表示
                     address = (address.upper()).encode('UTF-8')
                 else:
                     print("输入有误")
                     return
 
-                messageList = salveNum + order + address + registerNumhex
+                messageList = salveNum+order+address+registerNumhex
                 messageStr = str(messageList, encoding="utf-8")
                 crc16str = self.crc16Add(messageStr)
                 crc16 = crc16str.encode('UTF-8')
 
                 # cmd12 = ('0x{:02X}'.format(int(salveNum))).encode('UTF-8')#从'1'变成'\x01'
-                CMD1 = 0x010300010001D5CA  # 报文示例，读D0
+                CMD1 = 0x010300010001D5CA#报文示例，读D0
                 # a = struct.pack(">B", int(salveNum, base=16))
                 # a += struct.pack(">B", int(order, base=16))
                 # a += struct.pack(">H", int(address, base=16))
@@ -124,10 +124,10 @@ class xj_modbus_RTU_communication():
                 buffer_size = 5 + data_size
                 buffer = self.ser.read(buffer_size)
                 bufferHex = buffer.hex()
-                print(bufferHex)
+                # print(bufferHex)
                 for i in range(registerNum):
-                    registerValue = int(bufferHex[(6 + 4 * i):(6 + 4 * i + 4)], base=16)
-                    resultSingle.append([modle + str(num + i), registerValue])  # data[0]
+                    registerValue = int(bufferHex[(6+4*i):(6+4*i+4)], base=16)
+                    resultSingle.append([modle + str(num+i), registerValue])#data[0]
                 result.append(resultSingle)
         return result
 
@@ -152,18 +152,22 @@ class xj_modbus_RTU_communication():
             order = b'06'  # 功能码，单个寄存器写，暂时没有同时写多个寄存器
 
             for data in datas:
-                modle = data[0][0].upper()
+                modle = data[0][0:2].upper()
 
-                registerNum = int(data[1])  # 需要写入的十进制数
+
+                registerNum = int(data[1])#需要写入的十进制数
                 registerNumhex = hex(registerNum)[2:].zfill(4)
                 registerNumhex = (registerNumhex.upper()).encode('UTF-8')
 
-                if modle == 'D':  # D寄存器对应modbus地址十进制0~20479，十六进制0~4FFF
-                    num = int(data[0][1:])  # 寄存器的十进制编号
+                if modle == 'DD':  # D寄存器对应modbus地址十进制0~20479，十六进制0~4FFF
+                    num = int(data[0][2:])  # 寄存器的十进制编号
                     address = hex(num)[2:].zfill(4)  # 将num转换为4位16进制表示
                     address = (address.upper()).encode('UTF-8')
-
-                elif modle == 'H':  # HD寄存器对应modbus地址十进制41088~47231，十六进制A080~B87F
+                elif modle == 'SD':  # D寄存器对应modbus地址十进制0~20479，十六进制0~4FFF
+                    num = int(data[0][2:])  # 寄存器的十进制编号
+                    address = hex(num)[2:].zfill(4)  # 将num转换为4位16进制表示
+                    address = (address.upper()).encode('UTF-8')
+                elif modle == 'HD':  # HD寄存器对应modbus地址十进制41088~47231，十六进制A080~B87F
                     num = int(data[0][2:])  # 寄存器的十进制编号
                     address = hex(num + 41088)[2:].zfill(4)  # 将num转换为4位16进制表示
                     address = (address.upper()).encode('UTF-8')
@@ -176,7 +180,7 @@ class xj_modbus_RTU_communication():
                 crc16str = self.crc16Add(messageStr)
                 crc16 = crc16str.encode('UTF-8')
 
-                CMD1 = 0x01060064000109D5  # 报文示例，D100写入K1
+                CMD1 = 0x01060064000109D5#报文示例，D100写入K1
 
                 CMD = int.to_bytes(int(salveNum, base=16), 1, byteorder='big')
                 CMD += int.to_bytes(int(order, base=16), 1, byteorder='big')
@@ -187,7 +191,7 @@ class xj_modbus_RTU_communication():
 
                 # data_size = registerNum * 2
                 # buffer_size = 5 + data_size
-                buffer = self.ser.read(8)  # 一次只能写一个寄存器，所以固定为8位
+                buffer = self.ser.read(8)#一次只能写一个寄存器，所以固定为8位
                 if buffer != '':
                     bufferHex = buffer.hex()
                     Flag = True
@@ -197,19 +201,20 @@ class xj_modbus_RTU_communication():
 
         return Flag
 
-
-xj_rtu = xj_modbus_RTU_communication()
-
 if __name__ == '__main__':
-    ser = xj_rtu.ser
+    p = modbus_RTU_communication()
+    ser = p.ser
     if ser != False:
         # 从数据寄存器D100开始读取，读取3个寄存器的值（16位整数格式）
-        # dataRead = [['D60', 1], ['D61', 0], ['D62', 2], ['D63', 0], ['HD128', 20]]
-        # resultRead = xj_rtu.read_register(dataRead)
+        t1= time.time()
+        dataRead = [['D1', 120], ['HD123', 100]]
+        resultRead = p.read_register(dataRead)
+        t2=time.time()
+        print(t2-t1)
+        print(resultRead)
 
         # 向数据寄存器D100开始3个寄存器，写入值（16位整数格式）
-        # dataWrite = [['D60', 1], ['D61', 0], ['D62', 2], ['D63', 0], ['HD128', 50]]
-        dataWrite = [['D0', 1],['D1', 1]]
-        xj_rtu.write_register(dataWrite)
+        dataWrite = [['SD100', 1], ['HD101', 2], ['SD102', 3]]
+        p.write_register(dataWrite)
 
         ser.close()
