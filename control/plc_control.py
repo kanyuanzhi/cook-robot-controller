@@ -20,10 +20,10 @@ def write(func):
 @write
 def x_control(action: bytes, position: int = 0, execute_time: float = 0):
     if action == b"\x01":
-        signal = [("D20", 1), ("D22", position)]
+        signal = [("DD20", 1), ("DD22", position)]
         print("X轴定位{}，{}s".format(position, execute_time))
     elif action == b"\x02":
-        signal = [("D2", 1)]
+        signal = [("DD2", 1)]
         print("X轴复位，{}s".format(execute_time))
     else:
         raise NameError("wrong action")
@@ -33,10 +33,10 @@ def x_control(action: bytes, position: int = 0, execute_time: float = 0):
 @write
 def y_control(action: bytes, position: int = 0, execute_time: float = 0):
     if action == b"\x01":
-        signal = [("D10", 1), ("D12", position)]
+        signal = [("DD10", 1), ("DD12", position)]
         print("Y轴定位{}，{}s".format(position, execute_time))
     elif action == b"\x02":
-        signal = [("D0", 1)]
+        signal = [("DD0", 1)]
         print("Y轴复位，{}s".format(execute_time))
     else:
         raise NameError("wrong action")
@@ -48,19 +48,19 @@ def r_control(action: bytes, mode: int = 0, speed: int = 0, execute_time: float 
     if action == b"\x01":
         r_state = state_machine.get_r_state()
         if r_state["running"] == 0:
-            signal = [("D4", 1), ("D6", mode), ("HD100", speed)]
+            signal = [("DD4", 1), ("DD6", mode), ("HD100", speed)]
         elif r_state["mode"] == mode:  # 同模式下直接设置旋转速度
             signal = [("HD100", speed)]
         else:  # 改变旋转模式，需要先复位再设置
-            signal1 = [("D4", 0), ("D6", 0)]
-            signal2 = [("D4", 1), ("D6", mode), ("HD100", speed)]
+            signal1 = [("DD4", 0), ("DD6", 0)]
+            signal2 = [("DD4", 1), ("DD6", mode), ("HD100", speed)]
             state_machine.set_r_state(1, mode)
             print("R轴{}转，速度{}，{}s".format("正" if mode == 1 else "反" if mode == 2 else "正反", speed, execute_time))
             return [signal1, signal2], [execute_time, execute_time + 0.1]  # 复位后延时0.1秒再设置
         state_machine.set_r_state(1, mode)
         print("R轴{}转，速度{}，{}s".format("正" if mode == 1 else "反" if mode == 2 else "正反", speed, execute_time))
     elif action == b"\x02":
-        signal = [("D4", 0), ("D6", 0)]
+        signal = [("DD4", 0), ("DD6", 0)]
         state_machine.set_r_state(0, 0)
         print("R轴停转，{}s".format(execute_time))
     else:
@@ -70,28 +70,28 @@ def r_control(action: bytes, mode: int = 0, speed: int = 0, execute_time: float 
 
 @write
 def liquid_pump_control(pump_number: int, time: int, execute_time: float = 0):
-    signal = [("D40", 1), ("D42", pump_number), ("HD124", time)]
+    signal = [("DD40", 1), ("DD42", pump_number), ("HD124", time)]
     print("液体泵{}号打开，时长{}s，{}s".format(pump_number, time / 1000, execute_time))
     return [signal], [execute_time]
 
 
 @write
 def solid_pump_control(pump_number: int, time: int, execute_time: float = 0):
-    signal = [("D60", 1), ("D62", pump_number), ("HD128", time)]
+    signal = [("DD60", 1), ("DD62", pump_number), ("HD128", time)]
     print("固体泵{}号打开，时长{}s，{}s".format(pump_number, time / 10, execute_time))
     return [signal], [execute_time]
 
 
 @write
 def water_pump_control(pump_number: int, time: int, execute_time: float = 0):
-    signal = [("D50", 1), ("D52", pump_number), ("HD126", time)]
+    signal = [("DD50", 1), ("DD52", pump_number), ("HD126", time)]
     print("水泵{}号打开，时长{}s，{}s".format(pump_number, time / 10, execute_time))
     return [signal], [execute_time]
 
 
 @write
 def shake_control(shake_count: int, execute_time: float = 0):
-    signal = [("D30", 1), ("D34", shake_count)]
+    signal = [("DD30", 1), ("DD34", shake_count)]
     print("抖菜{}次，{}s".format(shake_count, execute_time))
     return [signal], [execute_time]
 
@@ -99,10 +99,10 @@ def shake_control(shake_count: int, execute_time: float = 0):
 @write
 def temperature_control(action: bytes, temperature: int = 0, execute_time: float = 0):
     if action == b"\x01":
-        signal = [("D70", 1), ("D72", temperature)]
+        signal = [("DD70", 1), ("SD72", temperature)]
         print("温控{}℃，{}s".format(temperature / 10, execute_time))
     elif action == b"\x02":
-        signal = [("D70", 1), ("D72", 0)]
+        signal = [("DD70", 1), ("SD72", 0)]
         print("温控0℃，{}s".format(execute_time))
     else:
         raise NameError("wrong action")
@@ -139,6 +139,6 @@ def shake_setting(up_speed: int = 0, down_speed: int = 0, execute_time: float = 
 
 @write
 def temperature_setting(high_temperature: int = 0, low_temperature: int = 0, execute_time: float = 0):
-    signal = [("D76", high_temperature), ("D77", low_temperature)]
+    signal = [("SD76", high_temperature), ("SD77", low_temperature)]
     print("设置温度上限值{}，温度下限值{}，{}s".format(high_temperature, low_temperature, execute_time))
     return [signal], [execute_time]
