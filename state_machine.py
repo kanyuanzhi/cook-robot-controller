@@ -2,19 +2,25 @@ import threading
 import time
 
 from apscheduler.schedulers.background import BackgroundScheduler
+from concurrent.futures import ThreadPoolExecutor
 
+write_pool = ThreadPoolExecutor(max_workers=5)
+read_pool = ThreadPoolExecutor(max_workers=5)
 
 # from FX3U_modbus_RTU import sl_rtu
 from XinJie_modbus_RTU import xj_rtu
 
 
 def write_to_plc(signal: list):
-    t1 = threading.Thread(target=xj_rtu.write_register, args=(signal,))
-    t1.start()
+    write_pool.submit(xj_rtu.write_register, args=(signal,))
+    # t1 = threading.Thread(target=xj_rtu.write_register, args=(signal,))
+    # t1.start()
 
 
 def read_from_plc():
-    print(time.time())
+    read_pool.submit(xj_rtu.read_register, args=([('D0', 120), ("HD0", 120)],))
+    # t1 = threading.Thread(target=xj_rtu.read_register, args=([('D0', 120), ("HD0", 120)],))
+    # t1.start()
 
 
 class StateMachine:
@@ -62,7 +68,7 @@ class StateMachine:
     def set_initial_time(self):
         self.initial_time = int(time.time())
 
-    def __execute(self):
+    def __write(self):
         if self.machine_status == "running":
             current_time = time.time()
             self.execute_time = int(int(current_time * 1000 - self.initial_time * 1000) / 100)
@@ -71,7 +77,7 @@ class StateMachine:
                 for signal in self.states[self.execute_time]:
                     print("{}:指令{}，执行时刻{}".format(time.time(), signal, self.execute_time / 10))
 
-                    write_to_plc(signal) #写plc
+                    write_to_plc(signal)  # 写plc
 
                     self.states_number -= 1
                     if self.states_number == 0:
@@ -81,14 +87,12 @@ class StateMachine:
                         print("执行完毕")
                         print("*" * 50)
 
-    def read(self):
+    @staticmethod
+    def __read():
         try:
-            pass
-        # t1 = threading.Thread(target=sl_rtu.read_register, args=([['D0', 80]],))
-        # t2 = threading.Thread(target=rtu.read_register, args=([['D0', 50]],))
-        # t1.start()
-        # t2.start()
+            read_from_plc()
         except Exception as e:
+            pass
             print(e)
 
     def start(self):  # 指令注入完毕后，调用此方法开始执行
@@ -103,8 +107,8 @@ class StateMachine:
         self.machine_status = "pause"
 
     def run(self):
-        self.apscheduler.add_job(self.__execute, args=(), trigger="interval", seconds=0.001)
-        # self.apscheduler.add_job(self.read, trigger="interval", seconds=0.2)
+        self.apscheduler.add_job(self.__write, args=(), trigger="interval", seconds=0.001)
+        self.apscheduler.add_job(self.__read, args=(), trigger="interval", seconds=1)
         self.apscheduler.start()
 
 

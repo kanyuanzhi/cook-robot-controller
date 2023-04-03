@@ -9,6 +9,21 @@ import time
 import configparser
 
 
+class PLCStatus:
+    def __init__(self):
+        self._status = {}
+
+    def set(self, number, value):
+        # todo：加锁？
+        self._status[number] = value
+
+    def get(self, number):
+        if number not in self._status:
+            return 0
+        else:
+            return self._status[number]
+
+
 class modbus_RTU_communication():
     def __init__(self):
         self.ser = self.config_ser()
@@ -129,6 +144,7 @@ class modbus_RTU_communication():
                 for i in range(registerNum):
                     registerValue = int(bufferHex[(6 + 4 * i):(6 + 4 * i + 4)], base=16)
                     resultSingle.append([modle + str(num + i), registerValue])  # data[0]
+                    plc_status.set(modle + str(num + i), registerValue)
                 result.append(resultSingle)
         return result
 
@@ -202,6 +218,7 @@ class modbus_RTU_communication():
         return Flag
 
 
+plc_status = PLCStatus()
 xj_rtu = modbus_RTU_communication()
 
 if __name__ == '__main__':

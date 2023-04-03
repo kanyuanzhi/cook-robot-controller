@@ -26,9 +26,6 @@ if __name__ == '__main__':
     command_server = UDPCommandServer(UNIX_SOCK_PIPE_PATH_COMMAND_SERVER,
                                       UNIX_SOCK_PIPE_PATH_COMMAND_CLIENT,
                                       COMMAND_PORT)
-
     t1 = threading.Thread(target=command_server.run)
-
     t1.start()
-
     t1.join()
