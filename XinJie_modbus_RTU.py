@@ -26,7 +26,8 @@ class PLCStatus:
 
 class modbus_RTU_communication():
     def __init__(self):
-        self.ser = self.config_ser()
+        self.ser = None
+        self.config_ser()
 
     # 如果连接串口成功会返回串口实例，连接失败会返回False
     def config_ser(self):
@@ -52,13 +53,13 @@ class modbus_RTU_communication():
             conf.set('frequency', 'Intervals', '5')
             conf.write(open('config.ini', 'w'))
         try:
-            ser = serial.Serial(port=comNo, baudrate=baud, bytesize=bytesize, parity=parity, stopbits=stopbits,
-                                timeout=timeout)
+            self.ser = serial.Serial(port=comNo, baudrate=baud, bytesize=bytesize, parity=parity, stopbits=stopbits,
+                                     timeout=timeout)
             # 发送连接测试命令
-            return ser
 
         except BaseException as e:
             print("串口连接失败,请核对连线及COM口编号:", e)
+            self.ser = None
             return False
 
     # 生成CRC16-MODBUS校验码
@@ -86,6 +87,7 @@ class modbus_RTU_communication():
         Returns:
         写入成功，返回True
         '''
+        print("datas")
         if len(datas) == 0:
             pass
         else:
@@ -146,6 +148,7 @@ class modbus_RTU_communication():
                     resultSingle.append([modle + str(num + i), registerValue])  # data[0]
                     plc_status.set(modle + str(num + i), registerValue)
                 result.append(resultSingle)
+                print(result)
         return result
 
     def write_register(self, datas):
@@ -227,8 +230,11 @@ if __name__ == '__main__':
     if ser != False:
         # 从数据寄存器D100开始读取，读取3个寄存器的值（16位整数格式）
         t1 = time.time()
-        dataRead = [['D1', 120], ['HD123', 100]]
-        resultRead = p.read_register(dataRead)
+        dataRead = [['D0', 100]]
+        while 1:
+            resultRead = p.read_register(dataRead)
+            time.sleep(1)
+            print(resultRead)
         t2 = time.time()
         print(t2 - t1)
         print(resultRead)

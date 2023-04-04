@@ -9,7 +9,7 @@ def write(func):
         try:
             signals, execute_times = func(*args, **kwargs)
             for index, signal in enumerate(signals):
-                state_machine.add_state(signal, execute_times[index])
+                state_machine.add_signal(signal, execute_times[index])
         except Exception as e:
             print(e)
         return result

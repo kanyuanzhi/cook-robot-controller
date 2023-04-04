@@ -3,37 +3,50 @@ import time
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from concurrent.futures import ThreadPoolExecutor
-
-write_pool = ThreadPoolExecutor(max_workers=5)
-read_pool = ThreadPoolExecutor(max_workers=5)
-
-# from FX3U_modbus_RTU import sl_rtu
 from XinJie_modbus_RTU import xj_rtu
 
 
+# from FX3U_modbus_RTU import sl_rtu
+
+
+def write_work(signal: list):
+    xj_rtu.config_ser()
+    xj_rtu.write_register(signal)
+    xj_rtu.ser.close()
+
+
+def read_work(addresses: list):
+    xj_rtu.config_ser()
+    xj_rtu.read_register(addresses)
+    xj_rtu.ser.close()
+
+
 def write_to_plc(signal: list):
-    write_pool.submit(xj_rtu.write_register, args=(signal,))
-    # t1 = threading.Thread(target=xj_rtu.write_register, args=(signal,))
-    # t1.start()
+    # t1 = threading.Thread(target=write_work, args=(signal,))
+    # t1.execute()
+    pass
 
 
 def read_from_plc():
-    read_pool.submit(xj_rtu.read_register, args=([('D0', 120), ("HD0", 120)],))
-    # t1 = threading.Thread(target=xj_rtu.read_register, args=([('D0', 120), ("HD0", 120)],))
-    # t1.start()
+    # t1 = threading.Thread(target=read_work, args=([('D0', 120), ("HD0", 120)],))
+    # t1.execute()
+    pass
 
 
 class StateMachine:
     def __init__(self):
-        self.apscheduler = BackgroundScheduler()
-        self.states = {}  # {time1:[s1,s2],time2:[s1]}
-        self.state_is_finished = {}  # {time1:false,time2:true}
-        self.initial_time = 0
-        self.pause_time = 0
-        self.states_number = 0
+        self.apscheduler = BackgroundScheduler()  # 创建调度器
+        self.pool = ThreadPoolExecutor(max_workers=10)  # 创建线程池
 
-        self.machine_status = "idle"  # running/pause/idle
-        self.execute_time = 0
+        self.machine_state = "idle"  # executing/pause/idle
+
+        self.signals = {}  # 信号字典，{time1:[s1,s2],time2:[s1]}
+        self.signal_is_finished = {}  # 信号完成字典， {time1:false,time2:true}
+        self.signals_number = 0  # 信号总数
+
+        self.executing_initial_time = 0  # 状态机“执行”状态的初始时间
+        self.executing_run_time = 0  # 状态机“执行”状态的运行时间
+        self.pause_time = 0  # 状态机暂停时间
 
         self.r_state = {  # R轴状态
             "running": 0,  # 0停止，1旋转
@@ -42,17 +55,20 @@ class StateMachine:
 
         print(self.__class__.__name__)
 
-    def add_state(self, signal, execute_time):
-        execute_time *= 10  # 状态控制精度0.1s
-        if self.machine_status != "idle":
-            print("machine is busy now!")
-            return False
-        if execute_time not in self.states:
-            self.states[execute_time] = [signal]
-            self.state_is_finished[execute_time] = False
-        else:
-            self.states[execute_time].append(signal)
-        self.states_number += 1
+    def add_signal(self, signal, execute_time, is_immediate=False):
+        execute_time *= 10  # 执行时间控制精度0.1s
+        if is_immediate:  # 立即执行的指令
+            self.pool.submit(write_work, args=(signal,))  # 写plc
+        else:  # 不是立即执行的指令，按时间顺序执行
+            if self.machine_state != "idle":
+                print("machine is busy now!")
+                return False
+            if execute_time not in self.signals:
+                self.signals[execute_time] = [signal]
+                self.signal_is_finished[execute_time] = False
+            else:
+                self.signals[execute_time].append(signal)
+            self.signals_number += 1
         return True
 
     def check_state(self):  # 检查状态，当前是否有任务在运行
@@ -65,50 +81,55 @@ class StateMachine:
         self.r_state["running"] = running
         self.r_state["mode"] = mode
 
-    def set_initial_time(self):
-        self.initial_time = int(time.time())
+    def __write_work(self):
+        current_time = time.time()
+        self.executing_run_time = int(
+            int(current_time * 1000 - self.executing_initial_time * 1000) / 100)  # 执行时间控制精度0.1s
+        if self.executing_run_time in self.signal_is_finished \
+                and self.signal_is_finished[self.executing_run_time] is False:
+            # 执行状态的运行时间在信号字典中，且信号未被执行
+            self.signal_is_finished[self.executing_run_time] = True  # 信号设置为完成
+            for signal in self.signals[self.executing_run_time]:
+                # 执行一个时间点上的多条信号
+                print("{}:指令{}，执行时刻{}".format(time.time(), signal, self.executing_run_time / 10))
+
+                self.pool.submit(write_work, args=(signal,))  # 写plc
+
+                self.signals_number -= 1  # 信号数量减1
+                if self.signals_number == 0:
+                    # 信号全部执行完毕
+                    self.machine_state = "idle"  # 状态机进入挂起状态
+                    self.signals = {}  # 信号字典清空
+                    self.signal_is_finished = {}  # 信号完成字典清空
+                    self.apscheduler.get_job("write").remove()  # 移除写任务
+                    print("执行完毕\n" + "*" * 50)
+        return
 
     def __write(self):
-        if self.machine_status == "running":
-            current_time = time.time()
-            self.execute_time = int(int(current_time * 1000 - self.initial_time * 1000) / 100)
-            if self.execute_time in self.state_is_finished and self.state_is_finished[self.execute_time] is False:
-                self.state_is_finished[self.execute_time] = True
-                for signal in self.states[self.execute_time]:
-                    print("{}:指令{}，执行时刻{}".format(time.time(), signal, self.execute_time / 10))
-
-                    write_to_plc(signal)  # 写plc
-
-                    self.states_number -= 1
-                    if self.states_number == 0:
-                        self.machine_status = "idle"
-                        self.states = {}
-                        self.state_is_finished = {}
-                        print("执行完毕")
-                        print("*" * 50)
-
-    @staticmethod
-    def __read():
         try:
-            read_from_plc()
+            self.pool.submit(self.__write_work)
         except Exception as e:
-            pass
             print(e)
 
-    def start(self):  # 指令注入完毕后，调用此方法开始执行
-        if len(self.states) == 0:
+    def __read(self):
+        try:
+            self.pool.submit(read_work, ([('D0', 120), ("HD0", 120)]))
+        except Exception as e:
+            print(e)
+
+    def execute(self):  # 指令注入完毕后，调用此方法开始执行
+        if len(self.signals) == 0:
             print("没有指令需要执行")
             return
-        self.initial_time = time.time()
-        self.machine_status = "running"
+        self.machine_state = "executing"  # 状态机进入执行指令状态
+        self.apscheduler.add_job(self.__write, args=(), trigger="interval", seconds=0.001, id="write")  # 添加一个写任务
+        self.executing_initial_time = time.time()  # 指令执行的初始时间设置为当前时间
 
-    def pause(self):
+    def pause(self):  # 只暂停写任务
         self.pause_time = time.time()
-        self.machine_status = "pause"
+        self.machine_state = "pause"
 
     def run(self):
-        self.apscheduler.add_job(self.__write, args=(), trigger="interval", seconds=0.001)
-        self.apscheduler.add_job(self.__read, args=(), trigger="interval", seconds=1)
         self.apscheduler.start()
 
 
@@ -117,13 +138,13 @@ state_machine = StateMachine()
 if __name__ == "__main__":
     state_machine.run()
 
-    state_machine.add_state("s1", 0)
-    state_machine.add_state("s2", 2)
-    state_machine.add_state("s3", 5)
-    state_machine.add_state("s4", 10)
-    print(state_machine.states)
+    state_machine.add_signal("s1", 0)
+    state_machine.add_signal("s2", 2)
+    state_machine.add_signal("s3", 5)
+    state_machine.add_signal("s4", 10)
+    print(state_machine.signals)
 
-    state_machine.start()
+    state_machine.execute()
 
     while True:
         # print(time.time())

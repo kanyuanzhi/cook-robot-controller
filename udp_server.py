@@ -102,8 +102,8 @@ class UDPStatusServer(UDPServer):
 #     t1 = threading.Thread(target=command_server.run)
 #     t2 = threading.Thread(target=status_server.run)
 #
-#     t1.start()
-#     t2.start()
+#     t1.execute()
+#     t2.execute()
 #
 #     t1.join()
 #     t2.join()

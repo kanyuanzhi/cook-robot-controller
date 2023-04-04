@@ -21,7 +21,7 @@ if __name__ == '__main__':
     # r_setting(20, 5, 0.2)
     # shake_setting(10, 5, 0.3)
     # temperature_setting(320, 10, 0.4)
-    # state_machine.start()
+    # state_machine.execute()
 
     command_server = UDPCommandServer(UNIX_SOCK_PIPE_PATH_COMMAND_SERVER,
                                       UNIX_SOCK_PIPE_PATH_COMMAND_CLIENT,

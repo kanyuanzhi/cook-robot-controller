@@ -27,8 +27,8 @@ class CommandHandler:
         self.data_content = None
 
     def handle(self, data: bytes):
-        print(state_machine.machine_status)
-        if state_machine.machine_status != "idle":
+        print(state_machine.machine_state)
+        if state_machine.machine_state != "idle":
             print("machine is busy now!")
             return
         self.data_model = data[7:8]
@@ -40,7 +40,7 @@ class CommandHandler:
             self._multiple_command_handle(self.data_content)  # data_content大小 14*n
         else:
             self._plc_instruction_handle(self.data_content)  # data_content大小 14
-        state_machine.start()
+        state_machine.execute()
 
     @staticmethod
     def _single_command_handle(data_content):
