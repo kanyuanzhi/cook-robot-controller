@@ -48,12 +48,12 @@ def r_control(action: bytes, mode: int = 0, speed: int = 0, execute_time: float 
     if action == b"\x01":
         r_state = state_machine.get_r_state()
         if r_state["running"] == 0:
-            signal = [("DD4", 1), ("DD6", mode), ("HD100", speed)]
+            signal = [("DD4", 1), ("DD6", mode), ("HS100", speed)]
         elif r_state["mode"] == mode:  # 同模式下直接设置旋转速度
-            signal = [("HD100", speed)]
+            signal = [("HS100", speed)]
         else:  # 改变旋转模式，需要先复位再设置
             signal1 = [("DD4", 0), ("DD6", 0)]
-            signal2 = [("DD4", 1), ("DD6", mode), ("HD100", speed)]
+            signal2 = [("DD4", 1), ("DD6", mode), ("HS100", speed)]
             state_machine.set_r_state(1, mode)
             print("R轴{}转，速度{}，{}s".format("正" if mode == 1 else "反" if mode == 2 else "正反", speed, execute_time))
             return [signal1, signal2], [execute_time, execute_time + 0.1]  # 复位后延时0.1秒再设置
@@ -111,28 +111,28 @@ def temperature_control(action: bytes, temperature: int = 0, execute_time: float
 
 @write
 def x_setting(speed: int = 0, execute_time: float = 0):
-    signal = [("HD112", speed)]
+    signal = [("HS112", speed)]
     print("设置X轴移动速度{}，{}s".format(speed, execute_time))
     return [signal], [execute_time]
 
 
 @write
 def y_setting(speed: int = 0, execute_time: float = 0):
-    signal = [("HD110", speed)]
+    signal = [("HS110", speed)]
     print("设置Y轴转动速度{}，{}s".format(speed, execute_time))
     return [signal], [execute_time]
 
 
 @write
 def r_setting(speed: int = 0, circles: int = 0, execute_time: float = 0):
-    signal = [("HD100", speed), ("HD104", circles)]
+    signal = [("HS100", speed), ("HS104", circles)]
     print("设置R轴旋转速度{}，正反转圈数{}，{}s".format(speed, circles, execute_time))
     return [signal], [execute_time]
 
 
 @write
 def shake_setting(up_speed: int = 0, down_speed: int = 0, execute_time: float = 0):
-    signal = [("HD114", up_speed), ("HD116", down_speed)]
+    signal = [("HS114", up_speed), ("HS116", down_speed)]
     print("设置抖菜上行速度{}，下行速度{}，{}s".format(up_speed, down_speed, execute_time))
     return [signal], [execute_time]
 

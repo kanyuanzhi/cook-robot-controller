@@ -181,7 +181,7 @@ class modbus_RTU_communication():
                     num = int(data[0][2:])  # 寄存器的十进制编号
                     address = hex(num)[2:].zfill(4)  # 将num转换为4位16进制表示
                     address = (address.upper()).encode('UTF-8')
-                elif model == 'SD':  # D寄存器对应modbus地址十进制0~20479，十六进制0~4FFF
+                elif model == 'DS':  # D寄存器对应modbus地址十进制0~20479，十六进制0~4FFF
                     num = int(data[0][2:])  # 寄存器的十进制编号
                     address = hex(num)[2:].zfill(4)  # 将num转换为4位16进制表示
                     address = (address.upper()).encode('UTF-8')
@@ -239,7 +239,7 @@ if __name__ == '__main__':
         print(resultRead)
 
         # 向数据寄存器D100开始3个寄存器，写入值（16位整数格式）
-        dataWrite = [['SD100', 1], ['HD101', 2], ['SD102', 3]]
+        dataWrite = [['DS100', 1], ['HD101', 2], ['DS102', 3]]
         p.write_register(dataWrite)
 
         ser.close()

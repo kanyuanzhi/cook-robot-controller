@@ -14,10 +14,10 @@ STATE_RESPONSE_DATA_HEADER = "CSR"
 def get_state(number: str):
     if number[0:2] == "DD":
         return plc_state.get("DD" + str(int(number[2:]) + 1)) * 65536 + plc_state.get(number)
-    elif number[0:2] == "SD":
+    elif number[0:2] == "DS":
         return plc_state.get(number)
-    elif number[0:2] == "HD":
-        return plc_state.get("HD" + str(int(number[2:]) + 1)) * 65536 + plc_state.get(number)
+    elif number[0:2] == "HS":
+        return plc_state.get("HS" + str(int(number[2:]) + 1)) * 65536 + plc_state.get(number)
 
 
 # HEADER DATA_LENGTH DATA_INFO DATA1 DATA2 DATA3 ...
@@ -60,45 +60,45 @@ class StateResponsePacker:
             "y_set_target_position": get_state("DD12"),
             "y_set_real_position": get_state("DD100"),
             "y_set_total_distance": get_state("DD104"),
-            "y_set_rotate_speed": get_state("HD110"),
+            "y_set_rotate_speed": get_state("HS110"),
 
             "x_reset_control_word": get_state("DD2"),
             "x_set_control_word": get_state("DD20"),
             "x_set_target_position": get_state("DD22"),
             "x_set_real_position": get_state("DD102"),
             "x_set_total_distance": get_state("DD106"),
-            "x_set_move_speed": get_state("HD112"),
+            "x_set_move_speed": get_state("HS112"),
 
             "r_control_word": get_state("DD4"),
             "r_rotate_mode": get_state("DD6"),
-            "r_rotate_speed": get_state("HD100"),
-            "r_rotate_number": get_state("HD104"),
+            "r_rotate_speed": get_state("HS100"),
+            "r_rotate_number": get_state("HS104"),
 
             "shake_control_word": get_state("DD30"),
             "shake_current_number": get_state("DD32"),
-            "shake_total_number": get_state("HD34"),
-            "shake_up_speed": get_state("HD114"),
-            "shake_down_speed": get_state("HD117"),
+            "shake_total_number": get_state("HS34"),
+            "shake_up_speed": get_state("HS114"),
+            "shake_down_speed": get_state("HS117"),
 
             "liquid_pump_control_word": get_state("DD40"),
             "liquid_pump_number": get_state("DD42"),
-            "liquid_pump_time": get_state("HD124"),
+            "liquid_pump_time": get_state("HS124"),
 
             "water_pump_control_word": get_state("DD50"),
             "water_pump_number": get_state("DD52"),
-            "water_pump_time": get_state("HD126"),
+            "water_pump_time": get_state("HS126"),
 
             "solid_pump_control_word": get_state("DD60"),
             "solid_pump_number": get_state("DD62"),
-            "solid_pump_time": get_state("HD128"),
+            "solid_pump_time": get_state("HS128"),
 
             "temperature_control_word": get_state("DD70"),
-            "temperature_target_number": get_state("SD72"),
-            "temperature_current_number": get_state("SD74"),
-            "temperature_up_number": get_state("SD76"),
-            "temperature_down_number": get_state("SD77"),
-            "temperature_warning": get_state("SD78"),
-            "temperature_infrared_number": get_state("SD80"),
+            "temperature_target_number": get_state("DS72"),
+            "temperature_current_number": get_state("DS74"),
+            "temperature_up_number": get_state("DS76"),
+            "temperature_down_number": get_state("DS77"),
+            "temperature_warning": get_state("DS78"),
+            "temperature_infrared_number": get_state("DS80"),
 
             # "emergency": get_state("DD90"),
             "emergency": 9999,

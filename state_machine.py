@@ -28,7 +28,7 @@ def write_to_plc(signal: list):
 
 
 def read_from_plc():
-    # t1 = threading.Thread(target=read_work, args=([('D0', 120), ("HD0", 120)],))
+    # t1 = threading.Thread(target=read_work, args=([('D0', 120), ("HS0", 120)],))
     # t1.execute()
     pass
 
@@ -128,7 +128,7 @@ class StateMachine:
 
     def __read(self):
         try:
-            self.pool.submit(read_work, ([('D0', 120), ("HD0", 120)]))
+            self.pool.submit(read_work, ([('D0', 120), ("HS0", 120)]))
         except Exception as e:
             print(e)
 
