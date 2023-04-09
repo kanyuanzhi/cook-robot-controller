@@ -29,8 +29,8 @@ def seasoning_control(slot_num: int, weight: int, execute_time: float = 0):
         # todo:加完料之后，判断下一个加料时间，若紧接着则Y轴保持，若很久或不再加料，则Y轴回到原位置
     elif slot_num in [7, 8]:  # 固体泵
         time = weight  # 加料分量与加料时长的转换关系,1ml/mg~0.001s
-        pump_numer = 1 if slot_num == 7 else 2  # 7对应1号固体泵，8对应2号固体泵
-        solid_pump_control(pump_numer, time, execute_time=execute_time + 2)
+        pump_number = 1 if slot_num == 7 else 2  # 7对应1号固体泵，8对应2号固体泵
+        solid_pump_control(pump_number, time, execute_time=execute_time + 2)
         # todo:加完料之后，判断下一个加料时间，若紧接着则Y轴保持，若很久或不再加料，则Y轴回到原位置
     else:
         raise NameError("错误，泵号超出1~8")

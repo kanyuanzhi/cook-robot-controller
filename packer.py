@@ -1,56 +1,112 @@
+import json
 import struct
 from time import time
-from XinJie_modbus_RTU import plc_status
-
-# x盒状态D22
-# y位D12
-# 旋转中D4 旋转模式D6 旋转圈数HD100
-# 出中D30
+from XinJie_modbus_RTU import plc_state
+from state_machine import xj_rtu
 
 HEADER = "COOK"
-COMMAND_DATA_HEADER = "CCR"
-INQUIRY_DATA_HEADER = "CRR"
+COMMAND_DATA_HEADER = "CCS"
+INQUIRY_DATA_HEADER = "CIS"
+STATE_REQUEST_DATA_HEADER = "CSS"
+STATE_RESPONSE_DATA_HEADER = "CSR"
 
 
-def double_process(number: str):
+def get_state(number: str):
     if number[0:2] == "DD":
-        return plc_status.get("DD" + str(int(number[2:]) + 1)) * 65536 + plc_status.get(number)
+        return plc_state.get("DD" + str(int(number[2:]) + 1)) * 65536 + plc_state.get(number)
     elif number[0:2] == "SD":
-        return plc_status.get(number)
+        return plc_state.get(number)
     elif number[0:2] == "HD":
-        return plc_status.get("HD" + str(int(number[2:]) + 1)) * 65536 + plc_status.get(number)
+        return plc_state.get("HD" + str(int(number[2:]) + 1)) * 65536 + plc_state.get(number)
 
 
 # HEADER DATA_LENGTH DATA_INFO DATA1 DATA2 DATA3 ...
-class Packer:
+class CommandResponsePacker:
     count = 1
 
     def __init__(self):
         self.msg = HEADER.encode()  # HEADER, 4 bytes
         self.data_info = b""
-        Packer.count += 1
+        self.data_content = b""
+        CommandResponsePacker.count += 1
 
     def pack(self, data_header: str, model: bytes):
-        self.msg += struct.pack(">I", 14)  # DATA_LENGTH, 4 bytes
-
         self.data_info += data_header.encode()  # DATA_HEADER, 3 bytes
         self.data_info += struct.pack(">I", self.count)  # DATA_NO, 4 bytes
         self.data_info += model  # DATA_MODEL, 1 byte
         self.data_info += b"\x00\x00"
         self.data_info += struct.pack(">I", int(time()))  # DATA_DATETIME, 4 bytes
 
+
+class StateResponsePacker:
+    count = 1
+
+    def __init__(self):
+        self.msg = HEADER.encode()  # HEADER, 4 bytes
+        self.data_info = b""
+        self.data_content = b""
+        StateResponsePacker.count += 1
+
+    def pack(self, data_header: str, model: bytes):
+        self.data_info += data_header.encode()  # DATA_HEADER, 3 bytes
+        self.data_info += struct.pack(">I", self.count)  # DATA_NO, 4 bytes
+        self.data_info += model  # DATA_MODEL, 1 byte
+        self.data_info += b"\x00\x00"
+        self.data_info += struct.pack(">I", int(time()))  # DATA_DATETIME, 4 bytes
+
+        state = {
+            "y_reset_control_word": get_state("DD0"),
+            "y_set_control_word": get_state("DD10"),
+            "y_set_target_position": get_state("DD12"),
+            "y_set_real_position": get_state("DD100"),
+            "y_set_total_distance": get_state("DD104"),
+            "y_set_rotate_speed": get_state("HD110"),
+
+            "x_reset_control_word": get_state("DD2"),
+            "x_set_control_word": get_state("DD20"),
+            "x_set_target_position": get_state("DD22"),
+            "x_set_real_position": get_state("DD102"),
+            "x_set_total_distance": get_state("DD106"),
+            "x_set_move_speed": get_state("HD112"),
+
+            "r_control_word": get_state("DD4"),
+            "r_rotate_mode": get_state("DD6"),
+            "r_rotate_speed": get_state("HD100"),
+            "r_rotate_number": get_state("HD104"),
+
+            "shake_control_word": get_state("DD30"),
+            "shake_current_number": get_state("DD32"),
+            "shake_total_number": get_state("HD34"),
+            "shake_up_speed": get_state("HD114"),
+            "shake_down_speed": get_state("HD117"),
+
+            "liquid_pump_control_word": get_state("DD40"),
+            "liquid_pump_number": get_state("DD42"),
+            "liquid_pump_time": get_state("HD124"),
+
+            "water_pump_control_word": get_state("DD50"),
+            "water_pump_number": get_state("DD52"),
+            "water_pump_time": get_state("HD126"),
+
+            "solid_pump_control_word": get_state("DD60"),
+            "solid_pump_number": get_state("DD62"),
+            "solid_pump_time": get_state("HD128"),
+
+            "temperature_control_word": get_state("DD70"),
+            "temperature_target_number": get_state("SD72"),
+            "temperature_current_number": get_state("SD74"),
+            "temperature_up_number": get_state("SD76"),
+            "temperature_down_number": get_state("SD77"),
+            "temperature_warning": get_state("SD78"),
+            "temperature_infrared_number": get_state("SD80"),
+
+            # "emergency": get_state("DD90"),
+            "emergency": 9999,
+        }
+
+        for key in state:
+            self.data_content += struct.pack(">H", state[key])
+
+        self.msg += struct.pack(">I", 14 + len(state) * 2)  # DATA_LENGTH, 4 bytes
         self.msg += self.data_info
-
-        y_reset_control_word = double_process("DD0")
-        y_set_control_word = double_process("DD10")
-        y_set_target_position = double_process("DD12")
-        y_set_real_position = double_process("DD100")
-        y_set_total_distance = double_process("DD104")
-        y_set_rotate_speed = double_process("HD110")
-
-        x_reset_control_word = double_process("DD2")
-        x_set_control_word = double_process("DD20")
-        x_set_target_position = double_process("DD22")
-        x_set_real_position = double_process("DD102")
-        x_set_total_distance = double_process("DD106")
-        x_set_move_speed = double_process("HD112")
+        self.msg += self.data_content

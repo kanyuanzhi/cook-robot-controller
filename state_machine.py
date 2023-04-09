@@ -3,22 +3,22 @@ import time
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from concurrent.futures import ThreadPoolExecutor
-from XinJie_modbus_RTU import xj_rtu
-
 
 # from FX3U_modbus_RTU import sl_rtu
+# from XinJie_modbus_RTU import xj_rtu
+from Xinjie_modbus_TCP import modbus_tcp
 
 
 def write_work(signal: list):
-    xj_rtu.config_ser()
-    xj_rtu.write_register(signal)
-    xj_rtu.ser.close()
+    # modbus_tcp.config_ser()
+    modbus_tcp.write_register(signal)
+    # modbus_tcp.ser.close()
 
 
 def read_work(addresses: list):
-    xj_rtu.config_ser()
-    xj_rtu.read_register(addresses)
-    xj_rtu.ser.close()
+    # modbus_tcp.config_ser()
+    modbus_tcp.read_register(addresses)
+    # modbus_tcp.ser.close()
 
 
 def write_to_plc(signal: list):
@@ -69,7 +69,6 @@ class StateMachine:
             else:
                 self.signals[execute_time].append(signal)
             self.signals_number += 1
-        return True
 
     def check_state(self):  # 检查状态，当前是否有任务在运行
         pass
@@ -80,6 +79,22 @@ class StateMachine:
     def set_r_state(self, running, mode):
         self.r_state["running"] = running
         self.r_state["mode"] = mode
+
+    def execute(self):  # 指令注入完毕后，调用此方法开始执行
+        if len(self.signals) == 0:
+            print("没有指令需要执行")
+            return
+        self.machine_state = "executing"  # 状态机进入执行指令状态
+        self.apscheduler.add_job(self.__write, args=(), trigger="interval", seconds=0.001, id="write")  # 添加一个写任务
+        self.executing_initial_time = time.time()  # 指令执行的初始时间设置为当前时间
+
+    def pause(self):  # 只暂停写任务
+        self.pause_time = time.time()
+        self.machine_state = "pause"
+
+    def run(self):
+        self.apscheduler.add_job(self.__read, args=(), trigger="interval", seconds=1, id="read")  # 添加一个读任务
+        self.apscheduler.start()
 
     def __write_work(self):
         current_time = time.time()
@@ -117,23 +132,8 @@ class StateMachine:
         except Exception as e:
             print(e)
 
-    def execute(self):  # 指令注入完毕后，调用此方法开始执行
-        if len(self.signals) == 0:
-            print("没有指令需要执行")
-            return
-        self.machine_state = "executing"  # 状态机进入执行指令状态
-        self.apscheduler.add_job(self.__write, args=(), trigger="interval", seconds=0.001, id="write")  # 添加一个写任务
-        self.executing_initial_time = time.time()  # 指令执行的初始时间设置为当前时间
 
-    def pause(self):  # 只暂停写任务
-        self.pause_time = time.time()
-        self.machine_state = "pause"
-
-    def run(self):
-        self.apscheduler.start()
-
-
-state_machine = StateMachine()
+state_machine = StateMachine()  # 全局状态机
 
 if __name__ == "__main__":
     state_machine.run()

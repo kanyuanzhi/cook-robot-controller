@@ -70,21 +70,21 @@ def r_control(action: bytes, mode: int = 0, speed: int = 0, execute_time: float 
 
 @write
 def liquid_pump_control(pump_number: int, time: int, execute_time: float = 0):
-    signal = [("DD40", 1), ("DD42", pump_number), ("HD124", time)]
+    signal = [("DD40", 1), ("DD42", pump_number), ("HS124", time)]
     print("液体泵{}号打开，时长{}s，{}s".format(pump_number, time / 1000, execute_time))
     return [signal], [execute_time]
 
 
 @write
 def solid_pump_control(pump_number: int, time: int, execute_time: float = 0):
-    signal = [("DD60", 1), ("DD62", pump_number), ("HD128", time)]
+    signal = [("DD60", 1), ("DD62", pump_number), ("HS128", time)]
     print("固体泵{}号打开，时长{}s，{}s".format(pump_number, time / 10, execute_time))
     return [signal], [execute_time]
 
 
 @write
 def water_pump_control(pump_number: int, time: int, execute_time: float = 0):
-    signal = [("DD50", 1), ("DD52", pump_number), ("HD126", time)]
+    signal = [("DD50", 1), ("DD52", pump_number), ("HS126", time)]
     print("水泵{}号打开，时长{}s，{}s".format(pump_number, time / 10, execute_time))
     return [signal], [execute_time]
 
@@ -99,10 +99,10 @@ def shake_control(shake_count: int, execute_time: float = 0):
 @write
 def temperature_control(action: bytes, temperature: int = 0, execute_time: float = 0):
     if action == b"\x01":
-        signal = [("DD70", 1), ("SD72", temperature)]
+        signal = [("DD70", 1), ("DS72", temperature)]
         print("温控{}℃，{}s".format(temperature / 10, execute_time))
     elif action == b"\x02":
-        signal = [("DD70", 1), ("SD72", 0)]
+        signal = [("DD70", 1), ("DS72", 0)]
         print("温控0℃，{}s".format(execute_time))
     else:
         raise NameError("wrong action")
@@ -139,6 +139,6 @@ def shake_setting(up_speed: int = 0, down_speed: int = 0, execute_time: float = 
 
 @write
 def temperature_setting(high_temperature: int = 0, low_temperature: int = 0, execute_time: float = 0):
-    signal = [("SD76", high_temperature), ("SD77", low_temperature)]
+    signal = [("DS76", high_temperature), ("DS77", low_temperature)]
     print("设置温度上限值{}，温度下限值{}，{}s".format(high_temperature, low_temperature, execute_time))
     return [signal], [execute_time]

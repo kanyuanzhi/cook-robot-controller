@@ -6,8 +6,7 @@ import threading
 from functools import wraps
 
 from handler import CommandHandler
-from packer import Packer
-
+from packer import CommandResponsePacker, StateResponsePacker
 
 UNIX_SOCK_PIPE_PATH_COMMAND_CLIENT = "/tmp/unixsock_command_client.sock"
 UNIX_SOCK_PIPE_PATH_COMMAND_SERVER = "/tmp/unixsock_command_server.sock"
@@ -15,8 +14,15 @@ UNIX_SOCK_PIPE_PATH_STATUS_CLIENT = "/tmp/unixsock_status_client.sock"
 UNIX_SOCK_PIPE_PATH_STATUS_SERVER = "/tmp/unixsock_status_server.sock"
 HOST = "127.0.0.1"
 # HOST = "169.254.70.55"
-COMMAND_PORT = 9999
-STATUS_PORT = 9998
+COMMAND_CLIENT_PORT = 10010
+COMMAND_SERVER_PORT = 10011
+STATUS_CLIENT_PORT = 10012
+STATUS_SERVER_PORT = 10013
+
+COMMAND_DATA_HEADER = "CCS"
+INQUIRY_DATA_HEADER = "CIS"
+STATE_REQUEST_DATA_HEADER = "CSS"
+STATE_RESPONSE_DATA_HEADER = "CSR"
 
 
 def sendto(func):
@@ -33,17 +39,19 @@ def sendto(func):
 
 
 class UDPServer:
-    def __init__(self, local_path, remote_path, port):
+    def __init__(self, local_path, remote_path, local_port, remote_port):
         self.server = None
-        self.remote_path = remote_path
         if sys.platform == "linux":
             self.server = socket.socket(family=socket.AF_UNIX, type=socket.SOCK_DGRAM)
             if os.path.exists(local_path):
                 os.remove(local_path)
             self.addr = local_path
+            self.remote_addr = remote_path
         else:
             self.server = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
-            self.addr = (HOST, port)
+            self.addr = (HOST, local_port)
+            self.remote_addr = (HOST, remote_port)
+        print(self.addr)
         self.server.bind(self.addr)
         print(self.__class__.__name__)
 
@@ -55,7 +63,7 @@ class UDPServer:
             if header == "COOK":  # 判断数据包header，如果是COOK，表示为数据包开头，如果不是，则继续
                 length = struct.unpack(">I", msg[4:8])[0]
                 data = msg[8:8 + length]
-                self._process(data, addr)
+                self._process(data, self.remote_addr)
             else:
                 print("packet is not COOK")
 
@@ -65,19 +73,22 @@ class UDPServer:
 
 
 class UDPCommandServer(UDPServer):
+    def __init__(self, local_path, remote_path, local_port, remote_port):
+        super().__init__(local_path, remote_path, local_port, remote_port)
+
     @sendto
     def _process(self, data, addr):
-        packer = Packer()
+        packer = CommandResponsePacker()
         data_header = data[0:3].decode("utf-8")
         command_handler = CommandHandler()
-        if data_header == "CCS":  # 接收指令
+        if data_header == COMMAND_DATA_HEADER:  # 接收指令
             # 执行指令，将用户型命令转为一系列PLC型命令或直接处理PLC型指令，查表后写到PLC对应地址
             try:
                 command_handler.handle(data)
             except Exception as e:
                 print(e.args)
             packer.pack("CCR", b"\x01")  # 返回开始执行指令的信号
-        elif data_header == "CIS":  # 接收查询信息，并依据data[7]的值区分查询内容
+        elif data_header == INQUIRY_DATA_HEADER:  # 接收查询信息，并依据data[7]的值区分查询内容
             if data[7] == 1:  # 查询指令是否可以执行
                 # todo:判断指令是否可以执行（如上一条指令还未执行完毕等）
                 packer.pack("CIR", b"\x01")  # 若可以，model置1，返回可以执行，准备接收指令；若不可以，model置2（\x02）
@@ -85,16 +96,29 @@ class UDPCommandServer(UDPServer):
 
 
 class UDPStatusServer(UDPServer):
+    def __init__(self, local_path, remote_path, local_port, remote_port):
+        super().__init__(local_path, remote_path, local_port, remote_port)
+
     @sendto
     def _process(self, data, addr):
-        packer = Packer()
-        packer.pack("CSR", b"\x01")
+        packer = StateResponsePacker()
+        packer.pack(STATE_RESPONSE_DATA_HEADER, b"\x01")
+        # print(data)
+        # print(len(packer.msg))
         return packer.msg
+
+
+command_server = UDPCommandServer(UNIX_SOCK_PIPE_PATH_COMMAND_SERVER,
+                                  UNIX_SOCK_PIPE_PATH_COMMAND_CLIENT,
+                                  COMMAND_SERVER_PORT, COMMAND_CLIENT_PORT)
+status_server = UDPStatusServer(UNIX_SOCK_PIPE_PATH_STATUS_SERVER,
+                                UNIX_SOCK_PIPE_PATH_STATUS_CLIENT,
+                                STATUS_SERVER_PORT, STATUS_CLIENT_PORT)
 
 # if __name__ == "__main__":
 #     command_server = UDPCommandServer(UNIX_SOCK_PIPE_PATH_COMMAND_SERVER,
 #                                       UNIX_SOCK_PIPE_PATH_COMMAND_CLIENT,
-#                                       COMMAND_PORT)
+#                                       COMMAND_CLIENT_PORT)
 #     status_server = UDPStatusServer(UNIX_SOCK_PIPE_PATH_STATUS_SERVER,
 #                                     UNIX_SOCK_PIPE_PATH_STATUS_CLIENT,
 #                                     STATUS_PORT)

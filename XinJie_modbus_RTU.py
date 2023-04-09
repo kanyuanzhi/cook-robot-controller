@@ -9,7 +9,7 @@ import time
 import configparser
 
 
-class PLCStatus:
+class PLCState:
     def __init__(self):
         self._status = {}
 
@@ -58,7 +58,7 @@ class modbus_RTU_communication():
             # 发送连接测试命令
 
         except BaseException as e:
-            print("串口连接失败,请核对连线及COM口编号:", e)
+            # print("串口连接失败,请核对连线及COM口编号:", e)
             self.ser = None
             return False
 
@@ -87,7 +87,6 @@ class modbus_RTU_communication():
         Returns:
         写入成功，返回True
         '''
-        print("datas")
         if len(datas) == 0:
             pass
         else:
@@ -98,18 +97,18 @@ class modbus_RTU_communication():
 
             for data in datas:
                 resultSingle = []
-                modle = data[0][0].upper()
+                model = data[0][0].upper()
 
                 registerNum = int(data[1])  # 读取的寄存器个数
                 registerNumhex = hex(registerNum)[2:].zfill(4)
                 registerNumhex = (registerNumhex.upper()).encode('UTF-8')
 
-                if modle == 'D':  # D寄存器对应modbus地址十进制0~20479，十六进制0~4FFF
+                if model == 'D':  # D寄存器对应modbus地址十进制0~20479，十六进制0~4FFF
                     num = int(data[0][1:])  # 寄存器的十进制编号
                     address = hex(num)[2:].zfill(4)  # 将num转换为4位16进制表示
                     address = (address.upper()).encode('UTF-8')
 
-                elif modle == 'H':  # HD寄存器对应modbus地址十进制41088~47231，十六进制A080~B87F
+                elif model == 'H':  # HD寄存器对应modbus地址十进制41088~47231，十六进制A080~B87F
                     num = int(data[0][2:])  # 寄存器的十进制编号
                     address = hex(num + 41088)[2:].zfill(4)  # 将num转换为4位16进制表示
                     address = (address.upper()).encode('UTF-8')
@@ -145,8 +144,8 @@ class modbus_RTU_communication():
                 # print(bufferHex)
                 for i in range(registerNum):
                     registerValue = int(bufferHex[(6 + 4 * i):(6 + 4 * i + 4)], base=16)
-                    resultSingle.append([modle + str(num + i), registerValue])  # data[0]
-                    plc_status.set(modle + str(num + i), registerValue)
+                    resultSingle.append([model + str(num + i), registerValue])  # data[0]
+                    plc_state.set(model + str(num + i), registerValue)
                 result.append(resultSingle)
                 print(result)
         return result
@@ -172,21 +171,21 @@ class modbus_RTU_communication():
             order = b'06'  # 功能码，单个寄存器写，暂时没有同时写多个寄存器
 
             for data in datas:
-                modle = data[0][0:2].upper()
+                model = data[0][0:2].upper()
 
                 registerNum = int(data[1])  # 需要写入的十进制数
                 registerNumhex = hex(registerNum)[2:].zfill(4)
                 registerNumhex = (registerNumhex.upper()).encode('UTF-8')
 
-                if modle == 'DD':  # D寄存器对应modbus地址十进制0~20479，十六进制0~4FFF
+                if model == 'DD':  # D寄存器对应modbus地址十进制0~20479，十六进制0~4FFF
                     num = int(data[0][2:])  # 寄存器的十进制编号
                     address = hex(num)[2:].zfill(4)  # 将num转换为4位16进制表示
                     address = (address.upper()).encode('UTF-8')
-                elif modle == 'SD':  # D寄存器对应modbus地址十进制0~20479，十六进制0~4FFF
+                elif model == 'SD':  # D寄存器对应modbus地址十进制0~20479，十六进制0~4FFF
                     num = int(data[0][2:])  # 寄存器的十进制编号
                     address = hex(num)[2:].zfill(4)  # 将num转换为4位16进制表示
                     address = (address.upper()).encode('UTF-8')
-                elif modle == 'HD':  # HD寄存器对应modbus地址十进制41088~47231，十六进制A080~B87F
+                elif model == 'HD':  # HD寄存器对应modbus地址十进制41088~47231，十六进制A080~B87F
                     num = int(data[0][2:])  # 寄存器的十进制编号
                     address = hex(num + 41088)[2:].zfill(4)  # 将num转换为4位16进制表示
                     address = (address.upper()).encode('UTF-8')
@@ -221,7 +220,7 @@ class modbus_RTU_communication():
         return Flag
 
 
-plc_status = PLCStatus()
+plc_state = PLCState()
 xj_rtu = modbus_RTU_communication()
 
 if __name__ == '__main__':
