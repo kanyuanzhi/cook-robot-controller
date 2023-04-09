@@ -2,7 +2,6 @@ import json
 import struct
 from time import time
 from XinJie_modbus_RTU import plc_state
-from state_machine import xj_rtu
 
 HEADER = "COOK"
 COMMAND_DATA_HEADER = "CCS"
