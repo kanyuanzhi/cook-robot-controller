@@ -128,7 +128,7 @@ class StateMachine:
 
     def __read(self):
         try:
-            self.pool.submit(read_work, ([('D0', 120), ("HS0", 120)]))
+            self.pool.submit(read_work, ([('DS0', 120), ("HS0", 120)]))
         except Exception as e:
             print(e)
 
