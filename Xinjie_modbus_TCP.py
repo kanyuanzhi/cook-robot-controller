@@ -34,7 +34,10 @@ class modbus_TCP_communication():
         self.ser = socket.socket()
         # host = '192.168.6.6'
         # port = 502
-        self.ser.connect((host, port))
+        # try:
+        #     self.ser.connect((host, port))
+        # except Exception as e:
+        #     print(e)
 
     def read_register(self, datas):
         '''
@@ -185,7 +188,6 @@ class modbus_TCP_communication():
                     buffer = self.ser.recv(12)  # 单字写，返回报文12位
                     if buffer != '':
                         bufferHex = buffer.hex()
-                        return True
                     else:
                         print("写入失败")
                         return False
@@ -208,10 +210,10 @@ class modbus_TCP_communication():
                     buffer = self.ser.recv(12)  # 双字写，返回报文12位
                     if buffer != '':
                         bufferHex = buffer.hex()
-                        return True
                     else:
                         print("写入失败")
                         return False
+            return True
 
 
 plc_state = PLCState()

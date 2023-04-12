@@ -13,6 +13,7 @@ UNIX_SOCK_PIPE_PATH_COMMAND_SERVER = "/tmp/unixsock_command_server.sock"
 UNIX_SOCK_PIPE_PATH_STATUS_CLIENT = "/tmp/unixsock_status_client.sock"
 UNIX_SOCK_PIPE_PATH_STATUS_SERVER = "/tmp/unixsock_status_server.sock"
 HOST = "127.0.0.1"
+# HOST = "192.168.6.10"
 # HOST = "169.254.70.55"
 COMMAND_CLIENT_PORT = 10010
 COMMAND_SERVER_PORT = 10011
@@ -41,7 +42,7 @@ def sendto(func):
 class UDPServer:
     def __init__(self, local_path, remote_path, local_port, remote_port):
         self.server = None
-        if sys.platform == "linux":
+        if sys.platform == "linux11":
             self.server = socket.socket(family=socket.AF_UNIX, type=socket.SOCK_DGRAM)
             if os.path.exists(local_path):
                 os.remove(local_path)
@@ -51,8 +52,8 @@ class UDPServer:
             self.server = socket.socket(family=socket.AF_INET, type=socket.SOCK_DGRAM)
             self.addr = (HOST, local_port)
             self.remote_addr = (HOST, remote_port)
-        print(self.addr)
         self.server.bind(self.addr)
+        print(self.addr)
         print(self.__class__.__name__)
 
     def run(self):

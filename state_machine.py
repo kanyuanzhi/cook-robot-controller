@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 # from FX3U_modbus_RTU import sl_rtu
 # from XinJie_modbus_RTU import xj_rtu
-from Xinjie_modbus_TCP import modbus_tcp
+from Xinjie_modbus_TCP import modbus_tcp, plc_state
 
 
 def write_work(signal: list):
@@ -100,6 +100,7 @@ class StateMachine:
         current_time = time.time()
         self.executing_run_time = int(
             int(current_time * 1000 - self.executing_initial_time * 1000) / 100)  # 执行时间控制精度0.1s
+        plc_state.set("time", self.executing_run_time)
         if self.executing_run_time in self.signal_is_finished \
                 and self.signal_is_finished[self.executing_run_time] is False:
             # 执行状态的运行时间在信号字典中，且信号未被执行
@@ -108,7 +109,7 @@ class StateMachine:
                 # 执行一个时间点上的多条信号
                 print("{}:指令{}，执行时刻{}".format(time.time(), signal, self.executing_run_time / 10))
 
-                self.pool.submit(write_work, args=(signal,))  # 写plc
+                self.pool.submit(write_work, signal)  # 写plc
 
                 self.signals_number -= 1  # 信号数量减1
                 if self.signals_number == 0:
@@ -117,6 +118,7 @@ class StateMachine:
                     self.signals = {}  # 信号字典清空
                     self.signal_is_finished = {}  # 信号完成字典清空
                     self.apscheduler.get_job("write").remove()  # 移除写任务
+                    plc_state.set("time", 0)  # 执行时间置零
                     print("执行完毕\n" + "*" * 50)
         return
 

@@ -1,7 +1,7 @@
 import json
 import struct
 from time import time
-from XinJie_modbus_RTU import plc_state
+from Xinjie_modbus_TCP import plc_state
 
 HEADER = "COOK"
 COMMAND_DATA_HEADER = "CCS"
@@ -12,11 +12,15 @@ STATE_RESPONSE_DATA_HEADER = "CSR"
 
 def get_state(number: str):
     if number[0:2] == "DD":
-        return plc_state.get("DD" + str(int(number[2:]) + 1)) * 65536 + plc_state.get(number)
+        return plc_state.get("DS" + str(int(number[2:]) + 1)) * 65536 + plc_state.get(number)
     elif number[0:2] == "DS":
         return plc_state.get(number)
-    elif number[0:2] == "HS":
+    elif number[0:2] == "HD":
         return plc_state.get("HS" + str(int(number[2:]) + 1)) * 65536 + plc_state.get(number)
+    elif number[0:2] == "HS":
+        return plc_state.get(number)
+    else:
+        return plc_state.get(number)
 
 
 # HEADER DATA_LENGTH DATA_INFO DATA1 DATA2 DATA3 ...
@@ -54,6 +58,9 @@ class StateResponsePacker:
         self.data_info += struct.pack(">I", int(time()))  # DATA_DATETIME, 4 bytes
 
         state = {
+            "time": get_state("time"),
+            # "time": 127,
+
             "y_reset_control_word": get_state("DD0"),
             "y_set_control_word": get_state("DD10"),
             "y_set_target_position": get_state("DD12"),
@@ -99,13 +106,12 @@ class StateResponsePacker:
             "temperature_warning": get_state("DS78"),
             "temperature_infrared_number": get_state("DS80"),
 
-            # "emergency": get_state("DD90"),
-            "emergency": 9999,
+            "emergency": get_state("DD90"),
+            # "emergency": 9999,
         }
 
         for key in state:
             self.data_content += struct.pack(">H", state[key])
-
         self.msg += struct.pack(">I", 14 + len(state) * 2)  # DATA_LENGTH, 4 bytes
         self.msg += self.data_info
         self.msg += self.data_content
