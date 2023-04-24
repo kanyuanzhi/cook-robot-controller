@@ -32,12 +32,12 @@ class modbus_TCP_communication():
             host = conf.get("modbus_TCP_settings", "IP")
             port = int(conf.get("modbus_TCP_settings", "port"))
         self.ser = socket.socket()
-        # host = '192.168.6.6'
-        # port = 502
-        # try:
-        #     self.ser.connect((host, port))
-        # except Exception as e:
-        #     print(e)
+        host = '192.168.6.6'
+        port = 502
+        try:
+            self.ser.connect((host, port))
+        except Exception as e:
+            print(e)
 
     def read_register(self, datas):
         '''
@@ -134,11 +134,12 @@ class modbus_TCP_communication():
         else:
             TransmissionIdentifier = b'0422'  # 传输标识符
             ProtocolIdentifier = b'0000'  # 协议标识符
-            bytesLen = b'0006'  # 单字写时，有效报文字节长度
-            salveNum = b'01'  # 站号；0x表示十六进制的int型变量，\x表示十六进制的字符型变量
-            order = b'06'  # 单字写，功能码
 
             for data in datas:
+                bytesLen = b'0006'  # 单字写时，有效报文字节长度
+                salveNum = b'01'  # 站号；0x表示十六进制的int型变量，\x表示十六进制的字符型变量
+                order = b'06'  # 单字写，功能码
+
                 modle = data[0][0:2].upper()
 
                 wValue = int(data[1])  # 需要写入的十进制数，默认为单字写
@@ -224,13 +225,13 @@ if __name__ == '__main__':
 
     # 从数据寄存器D100开始读取，读取3个寄存器的值（16位整数格式）
     # t1 = time.time()
-    dataRead = [['DD10', 1], ['DS1', 10], ['HD0', 1]]  # 如果是DD或者HD，即双字时，寄存器位数只能为1
-    resultRead = p.read_register(dataRead)
-    print(resultRead)
+    # dataRead = [['DD10', 1], ['DS1', 10], ['HD0', 1]]  # 如果是DD或者HD，即双字时，寄存器位数只能为1
+    # resultRead = p.read_register(dataRead)
+    # print(resultRead)
     # t2 = time.time()
     # print(t2 - t1)
     # print(resultRead)
 
     # 向数据寄存器D100开始3个寄存器，写入值（16位整数格式）
-    dataWrite = [['DS20', 32768], ['HD20', 1000000]]
+    dataWrite = [['DD40', 1], ['DD42', 3], ['HS124', 100]]
     p.write_register(dataWrite)
