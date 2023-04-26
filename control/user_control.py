@@ -14,7 +14,6 @@ def water_control(weight: int, execute_time: float = 0):
     y_control(b"\x01", 1, execute_time=execute_time)
     # todo:Y轴定位延时2秒
     time = weight  # 加料分量与加料时长的转换关系,1ml/mg~0.1s
-    a = 1
     water_pump_control(1, time, execute_time=execute_time + 2)
     # todo:加完料之后，判断下一个加料时间，若紧接着则Y轴保持，若很久或不再加料，则Y轴回到原位置
 

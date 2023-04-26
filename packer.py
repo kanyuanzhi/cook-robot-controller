@@ -59,6 +59,7 @@ class StateResponsePacker:
 
         state = {
             "time": get_state("time"),
+            "machine_state": get_state("machine_state"),
             # "time": 127,
 
             "y_reset_control_word": get_state("DD0"),

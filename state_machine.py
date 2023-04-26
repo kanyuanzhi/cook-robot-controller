@@ -38,7 +38,7 @@ class StateMachine:
         self.apscheduler = BackgroundScheduler()  # 创建调度器
         self.pool = ThreadPoolExecutor(max_workers=10)  # 创建线程池
 
-        self.machine_state = "idle"  # executing/pause/idle
+        self.machine_state = "idle"  # executing:2/pause:1/idle:0
 
         self.signals = {}  # 信号字典，{time1:[s1,s2],time2:[s1]}
         self.signal_is_finished = {}  # 信号完成字典， {time1:false,time2:true}
@@ -85,12 +85,14 @@ class StateMachine:
             print("没有指令需要执行")
             return
         self.machine_state = "executing"  # 状态机进入执行指令状态
+        plc_state.set("machine_state", 2)
         self.apscheduler.add_job(self.__write, args=(), trigger="interval", seconds=0.001, id="write")  # 添加一个写任务
         self.executing_initial_time = time.time()  # 指令执行的初始时间设置为当前时间
 
     def pause(self):  # 只暂停写任务
         self.pause_time = time.time()
         self.machine_state = "pause"
+        plc_state.set("machine_state", 1)
 
     def run(self):
         self.apscheduler.add_job(self.__read, args=(), trigger="interval", seconds=1, id="read")  # 添加一个读任务
@@ -115,6 +117,7 @@ class StateMachine:
                 if self.signals_number == 0:
                     # 信号全部执行完毕
                     self.machine_state = "idle"  # 状态机进入挂起状态
+                    plc_state.set("machine_state", 0)  # 状态机进入挂起状态
                     self.signals = {}  # 信号字典清空
                     self.signal_is_finished = {}  # 信号完成字典清空
                     self.apscheduler.get_job("write").remove()  # 移除写任务
