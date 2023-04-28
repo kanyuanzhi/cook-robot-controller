@@ -62,6 +62,12 @@ class CommandHandler:
             dish_out_control(execute_time=data_time)
         elif data_type == b"\x08":
             finish_control(execute_time=data_time)
+        elif data_type == b"\x09":
+            reset0_control(execute_time=data_time)
+        elif data_type == b"\x0a":
+            reset1_control(execute_time=data_time)
+        elif data_type == b"\x0b":
+            wash_control(execute_time=data_time)
         else:
             print("wrong type")
             return
