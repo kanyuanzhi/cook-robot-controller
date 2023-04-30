@@ -87,7 +87,7 @@ class StateMachine:
             return
         self.machine_state = "executing"  # 状态机进入执行指令状态
         plc_state.set("machine_state", 2)
-        self.apscheduler.add_job(self.__write, args=(), trigger="interval", seconds=0.001, id="write")  # 添加一个写任务
+        self.apscheduler.add_job(self.__write, args=(), trigger="interval", seconds=0.05, id="write")  # 添加一个写任务
         self.executing_initial_time = time.time()  # 指令执行的初始时间设置为当前时间
 
     def stop(self):  # 停机重置
