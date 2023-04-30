@@ -73,10 +73,10 @@ def dish_out_control(execute_time: float = 0):
     shake_control(5, execute_time=execute_time)  # todo： 一键抖菜，抖5次，需要测试
 
 
-def finish_control(execute_time: float = 0):
+def finish_control(execute_time: float = 0, is_immediate=False):
     print("****结束****执行时刻{}s".format(execute_time))
-    r_control(b"\x02", execute_time=execute_time)  # R轴停转
-    temperature_control(b"\x02", execute_time=execute_time)  # 停火
+    r_control(b"\x02", execute_time=execute_time, is_immediate=is_immediate)  # R轴停转
+    temperature_control(b"\x02", execute_time=execute_time, is_immediate=is_immediate)  # 停火
 
 
 def reset0_control(execute_time: float = 0, is_immediate=False):

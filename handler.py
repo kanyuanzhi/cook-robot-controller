@@ -74,7 +74,7 @@ class CommandHandler:
             wash_control(execute_time=data_time)
         elif data_type == b"\x70":
             state_machine.stop()  # 停机重置
-            reset0_control(execute_time=data_time, is_immediate=is_immediate)
+            finish_control(execute_time=data_time, is_immediate=is_immediate)
         else:
             print("wrong type")
             return
