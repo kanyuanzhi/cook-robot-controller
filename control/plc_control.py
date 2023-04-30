@@ -99,7 +99,8 @@ def shake_control(shake_count: int, execute_time: float = 0, is_immediate=False)
 @write
 def temperature_control(action: bytes, temperature: int = 0, execute_time: float = 0, is_immediate=False):
     if action == b"\x01":
-        signal = [("DD70", 1), ("DS72", temperature)]
+        # signal = [("DD70", 1), ("DS72", temperature)]
+        signal = [("DD70", 1), ("DS72", 200)]
         print("温控{}℃，{}s".format(temperature / 10, execute_time))
     elif action == b"\x02":
         signal = [("DD70", 1), ("DS72", 0)]
