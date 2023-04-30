@@ -34,10 +34,10 @@ class modbus_TCP_communication():
         self.ser = socket.socket()
         host = '192.168.6.6'
         port = 502
-        # try:
-        #     self.ser.connect((host, port))
-        # except Exception as e:
-        #     print(e)
+        try:
+            self.ser.connect((host, port))
+        except Exception as e:
+            print(e)
 
     def read_register(self, datas):
         '''
