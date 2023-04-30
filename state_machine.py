@@ -38,7 +38,7 @@ class StateMachine:
         self.apscheduler = BackgroundScheduler()  # 创建调度器
         self.pool = ThreadPoolExecutor(max_workers=100)  # 创建线程池
 
-        self.machine_state = "idle"  # executing:2/pause:1/idle:0
+        self.machine_state = "idle"  # washing:3/executing:2/pause:1/idle:0
 
         self.signals = {}  # 信号字典，{time1:[s1,s2],time2:[s1]}
         self.signal_is_finished = {}  # 信号完成字典， {time1:false,time2:true}
@@ -58,7 +58,7 @@ class StateMachine:
     def add_signal(self, signal, execute_time, is_immediate=False):
         execute_time *= 10  # 执行时间控制精度0.1s
         if is_immediate:  # 立即执行的指令
-            print("{}:指令{}，执行时刻{}".format(time.time(), signal, self.executing_run_time / 10))
+            print("{}:立即指令{}，执行时刻{}".format(time.time(), signal, self.executing_run_time / 10))
             self.pool.submit(write_work, signal)  # 写plc
         else:  # 不是立即执行的指令，按时间顺序执行
             if self.machine_state != "idle":
@@ -97,6 +97,7 @@ class StateMachine:
         self.signal_is_finished = {}  # 信号完成字典清空
         self.apscheduler.get_job("write").remove()  # 移除写任务
         plc_state.set("time", 0)  # 执行时间置零
+        self.signals_number = 0  # 信号总数置零
         print("执行完毕或停机重置\n" + "*" * 50)
 
     def pause(self):  # 只暂停写任务
@@ -117,16 +118,18 @@ class StateMachine:
                 and self.signal_is_finished[self.executing_run_time] is False:
             # 执行状态的运行时间在信号字典中，且信号未被执行
             self.signal_is_finished[self.executing_run_time] = True  # 信号设置为完成
+            waiting_signals = []
             for signal in self.signals[self.executing_run_time]:
                 # 执行一个时间点上的多条信号
                 print("{}:指令{}，执行时刻{}".format(time.time(), signal, self.executing_run_time / 10))
-
-                self.pool.submit(write_work, signal)  # 写plc
+                waiting_signals += signal
 
                 self.signals_number -= 1  # 信号数量减1
                 if self.signals_number == 0:
                     # 信号全部执行完毕
                     self.stop()
+            self.pool.submit(write_work, waiting_signals)  # 写plc
+            print("{}合并指令{}，执行时刻{}".format("*" * 10, waiting_signals, self.executing_run_time / 10))
         return
 
     def __write(self):
@@ -137,7 +140,7 @@ class StateMachine:
 
     def __read(self):
         try:
-            self.pool.submit(read_work, ([('DS0', 120), ("HS100", 120)]))
+            self.pool.submit(read_work, ([('DS0', 120), ("HS100", 20), ("HS200", 70)]))
         except Exception as e:
             print(e)
 

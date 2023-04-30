@@ -68,6 +68,8 @@ class StateResponsePacker:
             "y_set_total_distance": get_state("DD104"),
             "y_set_rotate_speed": get_state("HS110"),
 
+            "y_position_0": get_state("HS200"),
+
             "x_reset_control_word": get_state("DD2"),
             "x_set_control_word": get_state("DD20"),
             "x_set_target_position": get_state("DD22"),
