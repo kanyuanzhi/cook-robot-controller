@@ -111,7 +111,10 @@ class StateResponsePacker:
         }
 
         for key in state:
-            self.data_content += struct.pack(">H", state[key])
+            try:
+                self.data_content += struct.pack(">H", state[key])
+            except Exception as e:
+                self.data_content += struct.pack(">H", 0)
         self.msg += struct.pack(">I", 14 + len(state) * 2)  # DATA_LENGTH, 4 bytes
         self.msg += self.data_info
         self.msg += self.data_content
