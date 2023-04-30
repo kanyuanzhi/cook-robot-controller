@@ -36,7 +36,7 @@ def read_from_plc():
 class StateMachine:
     def __init__(self):
         self.apscheduler = BackgroundScheduler()  # 创建调度器
-        self.pool = ThreadPoolExecutor(max_workers=10)  # 创建线程池
+        self.pool = ThreadPoolExecutor(max_workers=100)  # 创建线程池
 
         self.machine_state = "idle"  # executing:2/pause:1/idle:0
 
