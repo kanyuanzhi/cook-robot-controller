@@ -41,7 +41,7 @@ def fire_control(action: bytes, fire_level: int = 0, execute_time: float = 0, is
     if fire_level == 0:
         temperature = 0
     else:
-        temperature = (fire_level - 1) * 200 + 300
+        temperature = (fire_level - 1) * 200 + 200
     temperature_control(action, temperature, execute_time=execute_time, is_immediate=is_immediate)
 
 
