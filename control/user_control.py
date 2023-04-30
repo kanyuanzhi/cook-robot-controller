@@ -81,8 +81,8 @@ def finish_control(execute_time: float = 0):
 
 def reset0_control(execute_time: float = 0, is_immediate=False):
     print("****复位0****执行时刻{}s".format(execute_time))
-    x_control(b"\x01", 0, execute_time=execute_time, is_immediate=is_immediate)  # X轴定位0号位（原点）
-    y_control(b"\x01", 2, execute_time=execute_time, is_immediate=is_immediate)  # Y轴定位2号位（接料2位）
+    x_control(b"\x02", execute_time=execute_time, is_immediate=is_immediate)  # X轴定位0号位（原点）
+    y_control(b"\x02", execute_time=execute_time, is_immediate=is_immediate)  # Y轴定位2号位（接料2位）
     r_control(b"\x02", execute_time=execute_time, is_immediate=is_immediate)  # R轴停转
     temperature_control(b"\x02", execute_time=execute_time, is_immediate=is_immediate)  # 停火
 
@@ -90,6 +90,7 @@ def reset0_control(execute_time: float = 0, is_immediate=False):
 def reset1_control(execute_time: float = 0):
     print("****复位1****执行时刻{}s".format(execute_time))
     x_control(b"\x01", 1, execute_time=execute_time)  # X轴定位1号位（上菜位）
+    y_control(b"\x01", 2, execute_time=execute_time)  # Y轴定位2号位（接料2位）
 
 
 def wash_control(execute_time: float = 0):
