@@ -34,10 +34,10 @@ class modbus_TCP_communication():
         self.ser = socket.socket()
         host = '192.168.6.6'
         port = 502
-        try:
-            self.ser.connect((host, port))
-        except Exception as e:
-            print(e)
+        # try:
+        #     self.ser.connect((host, port))
+        # except Exception as e:
+        #     print(e)
 
     def read_register(self, datas):
         '''
@@ -233,5 +233,6 @@ if __name__ == '__main__':
     # print(resultRead)
 
     # 向数据寄存器D100开始3个寄存器，写入值（16位整数格式）
-    dataWrite = [['DD40', 1], ['DD42', 3], ['HS124', 100]]
+    # dataWrite = [['DD20', 1], ['DD42', 3], ['HS124', 100]]
+    dataWrite = [['DD20', 1]]
     p.write_register(dataWrite)

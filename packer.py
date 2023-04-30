@@ -60,7 +60,6 @@ class StateResponsePacker:
         state = {
             "time": get_state("time"),
             "machine_state": get_state("machine_state"),
-            # "time": 127,
 
             "y_reset_control_word": get_state("DD0"),
             "y_set_control_word": get_state("DD10"),
@@ -106,9 +105,9 @@ class StateResponsePacker:
             "temperature_down_number": get_state("DS77"),
             "temperature_warning": get_state("DS78"),
             "temperature_infrared_number": get_state("DS80"),
+            # "temperature_infrared_number": 1293,
 
             "emergency": get_state("DD90"),
-            # "emergency": 9999,
         }
 
         for key in state:

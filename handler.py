@@ -28,12 +28,16 @@ class CommandHandler:
 
     def handle(self, data: bytes):
         print(state_machine.machine_state)
-        if state_machine.machine_state != "idle":
-            print("machine is busy now!")
-            return
+
         self.data_model = data[7:8]
         self.data_instruction_count = struct.unpack(">H", data[8:10])[0]
         self.data_content = data[14:14 + self.data_instruction_count * 14]
+        if self.data_model == b"\x04":
+            self._single_command_handle(self.data_content, True)
+            return
+        if state_machine.machine_state != "idle":
+            print("machine is busy now!")
+            return
         if self.data_model == b"\x01":
             self._single_command_handle(self.data_content)  # data_content大小 14
         elif self.data_model == b"\x02":
@@ -43,7 +47,7 @@ class CommandHandler:
         state_machine.execute()
 
     @staticmethod
-    def _single_command_handle(data_content):
+    def _single_command_handle(data_content, is_immediate=False):
         data_type, data_target, data_action, data_measures, data_measure_left, data_measure_right, data_measure_1, \
         data_measure_2, data_measure_3, data_measure_4, data_time = unpack_single_instruction(data_content)
         if data_type == b"\x01":
@@ -53,7 +57,7 @@ class CommandHandler:
         elif data_type == b"\x03":
             seasoning_control(data_target, data_measures, execute_time=data_time)
         elif data_type == b"\x04":
-            fire_control(data_action, data_measures, execute_time=data_time)
+            fire_control(data_action, data_measures, execute_time=data_time, is_immediate=is_immediate)
         elif data_type == b"\x05":
             stir_fry_control(data_action, data_measures, execute_time=data_time)
         elif data_type == b"\x06":
@@ -68,6 +72,9 @@ class CommandHandler:
             reset1_control(execute_time=data_time)
         elif data_type == b"\x0b":
             wash_control(execute_time=data_time)
+        elif data_type == b"\x70":
+            state_machine.stop()  # 停机重置
+            reset0_control(execute_time=data_time, is_immediate=is_immediate)
         else:
             print("wrong type")
             return

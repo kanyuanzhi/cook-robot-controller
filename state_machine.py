@@ -58,7 +58,8 @@ class StateMachine:
     def add_signal(self, signal, execute_time, is_immediate=False):
         execute_time *= 10  # 执行时间控制精度0.1s
         if is_immediate:  # 立即执行的指令
-            self.pool.submit(write_work, args=(signal,))  # 写plc
+            print("{}:指令{}，执行时刻{}".format(time.time(), signal, self.executing_run_time / 10))
+            self.pool.submit(write_work, signal)  # 写plc
         else:  # 不是立即执行的指令，按时间顺序执行
             if self.machine_state != "idle":
                 print("machine is busy now!")
@@ -89,6 +90,15 @@ class StateMachine:
         self.apscheduler.add_job(self.__write, args=(), trigger="interval", seconds=0.001, id="write")  # 添加一个写任务
         self.executing_initial_time = time.time()  # 指令执行的初始时间设置为当前时间
 
+    def stop(self):  # 停机重置
+        self.machine_state = "idle"  # 状态机进入挂起状态
+        plc_state.set("machine_state", 0)  # 状态机进入挂起状态
+        self.signals = {}  # 信号字典清空
+        self.signal_is_finished = {}  # 信号完成字典清空
+        self.apscheduler.get_job("write").remove()  # 移除写任务
+        plc_state.set("time", 0)  # 执行时间置零
+        print("执行完毕或停机重置\n" + "*" * 50)
+
     def pause(self):  # 只暂停写任务
         self.pause_time = time.time()
         self.machine_state = "pause"
@@ -116,13 +126,7 @@ class StateMachine:
                 self.signals_number -= 1  # 信号数量减1
                 if self.signals_number == 0:
                     # 信号全部执行完毕
-                    self.machine_state = "idle"  # 状态机进入挂起状态
-                    plc_state.set("machine_state", 0)  # 状态机进入挂起状态
-                    self.signals = {}  # 信号字典清空
-                    self.signal_is_finished = {}  # 信号完成字典清空
-                    self.apscheduler.get_job("write").remove()  # 移除写任务
-                    plc_state.set("time", 0)  # 执行时间置零
-                    print("执行完毕\n" + "*" * 50)
+                    self.stop()
         return
 
     def __write(self):
@@ -133,7 +137,7 @@ class StateMachine:
 
     def __read(self):
         try:
-            self.pool.submit(read_work, ([('DS0', 120), ("HS0", 120)]))
+            self.pool.submit(read_work, ([('DS0', 120), ("HS100", 120)]))
         except Exception as e:
             print(e)
 
