@@ -37,7 +37,7 @@ def seasoning_control(slot_num: int, weight: int, execute_time: float = 0):
 
 def fire_control(action: bytes, fire_level: int = 0, execute_time: float = 0, is_immediate=False):
     print("****火力****执行时刻{}s".format(execute_time))
-    # fire_level：1~10档，加热温度30~230℃，1档20℃
+    # fire_level：1~10档，加热温度20~200℃，1档20℃
     if fire_level == 0:
         temperature = 0
     else:
