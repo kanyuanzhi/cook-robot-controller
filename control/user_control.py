@@ -95,11 +95,11 @@ def reset1_control(execute_time: float = 0):
 
 def wash_control(execute_time: float = 0):
     print("****清洗****执行时刻{}s".format(execute_time))
-    y_control(b"\x01", 1, execute_time=execute_time)  # Y轴定位3号位（炒菜1位）
+    y_control(b"\x01", 2, execute_time=execute_time)  # Y轴定位2号位（接料2位）
     r_control(b"\x01", 3, 1000, execute_time=execute_time)  # R轴正反转，速度1000
     water_pump_control(1, 400, execute_time=execute_time + 5)  # 水泵40秒
-    # temperature_control(b"\x01", 200, execute_time=execute_time + 5)  # 加热50℃
-    # temperature_control(b"\x01", 0, execute_time=execute_time + 20)  # 15秒后停止加热
+    temperature_control(b"\x01", 200, execute_time=execute_time + 15)  # 加热20℃
+    temperature_control(b"\x01", 0, execute_time=execute_time + 25)  # 10秒后停止加热
     r_control(b"\x02", execute_time=execute_time + 45)  # R轴停转
     y_control(b"\x01", 7, execute_time=execute_time + 45)  # Y轴定位7号位（倒水位）
     y_control(b"\x01", 1, execute_time=execute_time + 50)  # Y轴定位1号位（接料1位）
