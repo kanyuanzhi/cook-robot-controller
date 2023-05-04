@@ -5,7 +5,7 @@ def ingredient_control(slot_num: int, execute_time: float = 0):
     print("****菜盒****执行时刻{}s".format(execute_time))
     y_control(b"\x01", 1, execute_time=execute_time)  # 两种写法：Y轴复位或Y轴定位到位置0 y_control(b"\x01", 0)
     # todo:Y轴复位延时3s
-    x_control(b"\x01", slot_num, execute_time=execute_time + 3)
+    x_control(b"\x01", slot_num + 1, execute_time=execute_time + 3)  # 菜仓1位为x轴2号位
     # todo:加完料之后，判断下一个加料时间，若紧接着则Y轴保持，若很久或不再加料，则Y轴回到原位置
 
 
