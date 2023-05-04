@@ -58,7 +58,11 @@ class UDPServer:
 
     def run(self):
         while True:
-            msg, addr = self.server.recvfrom(1024)
+            try:
+                msg, addr = self.server.recvfrom(1024)
+            except Exception as e:
+                print(e)
+                continue
             header = msg[0:4].decode("utf-8")
             # print(msg)
             if header == "COOK":  # 判断数据包header，如果是COOK，表示为数据包开头，如果不是，则继续

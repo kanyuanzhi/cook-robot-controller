@@ -8,7 +8,7 @@ import socket
 import time
 import configparser
 
-socket.setdefaulttimeout(1)
+# socket.setdefaulttimeout(1)
 
 class PLCState:
     def __init__(self):
