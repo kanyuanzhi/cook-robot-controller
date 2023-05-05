@@ -33,6 +33,7 @@ class modbus_TCP_communication():
             host = conf.get("modbus_TCP_settings", "IP")
             port = int(conf.get("modbus_TCP_settings", "port"))
         self.ser = socket.socket()
+        self.ser.settimeout(2)
         host = '192.168.6.6'
         port = 502
         try:

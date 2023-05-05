@@ -8,6 +8,8 @@ from concurrent.futures import ThreadPoolExecutor
 # from XinJie_modbus_RTU import xj_rtu
 from Xinjie_modbus_TCP import modbus_tcp, plc_state
 
+from logger import logger
+
 
 def write_work(signal: list):
     # modbus_tcp.config_ser()
@@ -99,6 +101,7 @@ class StateMachine:
         plc_state.set("time", 0)  # 执行时间置零
         self.signals_number = 0  # 信号总数置零
         print("执行完毕或停机重置\n" + "*" * 50)
+        logger.info("执行完毕或停机重置\n" + "*" * 50)
 
     def pause(self):  # 只暂停写任务
         self.pause_time = time.time()
@@ -122,6 +125,7 @@ class StateMachine:
             for signal in self.signals[self.executing_run_time]:
                 # 执行一个时间点上的多条信号
                 print("{}:指令{}，执行时刻{}".format(time.time(), signal, self.executing_run_time / 10))
+                logger.info("{}:指令{}，执行时刻{}".format(time.time(), signal, self.executing_run_time / 10))
                 waiting_signals += signal
 
                 self.signals_number -= 1  # 信号数量减1
