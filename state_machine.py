@@ -41,6 +41,10 @@ class StateMachine:
         self.pool = ThreadPoolExecutor(max_workers=100)  # 创建线程池
 
         self.machine_state = "idle"  # washing:3/executing:2/pause:1/idle:0
+        plc_state.set("machine_state", 0)
+
+        self.washing_state = False  # false:0 true:1
+        plc_state.set("washing_state", 0)
 
         self.signals = {}  # 信号字典，{time1:[s1,s2],time2:[s1]}
         self.signal_is_finished = {}  # 信号完成字典， {time1:false,time2:true}
@@ -95,6 +99,10 @@ class StateMachine:
     def stop(self):  # 停机重置
         self.machine_state = "idle"  # 状态机进入挂起状态
         plc_state.set("machine_state", 0)  # 状态机进入挂起状态
+
+        self.washing_state = False  # 置为非清洗状态
+        plc_state.set("washing_state", 0)  # 置为非清洗状态
+
         self.signals = {}  # 信号字典清空
         self.signal_is_finished = {}  # 信号完成字典清空
         self.apscheduler.get_job("write").remove()  # 移除写任务

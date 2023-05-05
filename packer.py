@@ -61,6 +61,8 @@ class StateResponsePacker:
             "time": get_state("time"),
             "machine_state": get_state("machine_state"),
 
+            "washing_state": get_state("washing_state"),
+
             "y_reset_control_word": get_state("DD0"),
             "y_set_control_word": get_state("DD10"),
             "y_set_target_position": get_state("DD12"),

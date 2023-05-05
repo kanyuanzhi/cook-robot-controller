@@ -2,6 +2,7 @@ import struct
 from control.plc_control import *
 from control.user_control import *
 from state_machine import state_machine
+from Xinjie_modbus_TCP import plc_state
 
 
 def unpack_single_instruction(single_instruction: bytes):
@@ -32,7 +33,7 @@ class CommandHandler:
         self.data_model = data[7:8]
         self.data_instruction_count = struct.unpack(">H", data[8:10])[0]
         self.data_content = data[14:14 + self.data_instruction_count * 14]
-        if self.data_model == b"\x04":
+        if self.data_model == b"\x04":  # 立即执行指令
             self._single_command_handle(self.data_content, True)
             return
         if state_machine.machine_state != "idle":
@@ -72,6 +73,9 @@ class CommandHandler:
             reset1_control(execute_time=data_time)
         elif data_type == b"\x0b":
             wash_control(execute_time=data_time)
+            state_machine.washing_state = True
+            plc_state.set("washing_state", 1)
+            # todo: 如果清洗指令作为组合指令中的一条，则清洗状态不能完全正确判断
         elif data_type == b"\x70":
             state_machine.stop()  # 停机重置
             finish_control(execute_time=data_time, is_immediate=is_immediate)
