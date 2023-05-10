@@ -24,6 +24,7 @@ def unpack_single_instruction(single_instruction: bytes):
 class CommandHandler:
     def __init__(self):
         self.data_model = None
+        self.data_uuid = None
         self.data_instruction_count = None
         self.data_content = None
 
@@ -32,13 +33,16 @@ class CommandHandler:
 
         self.data_model = data[7:8]
         self.data_instruction_count = struct.unpack(">H", data[8:10])[0]
-        self.data_content = data[14:14 + self.data_instruction_count * 14]
+        # self.data_content = data[14:14 + self.data_instruction_count * 14]
+        self.data_uuid = data[10:26]
+        self.data_content = data[30:30 + self.data_instruction_count * 14]
         if self.data_model == b"\x04":  # 立即执行指令
             self._single_command_handle(self.data_content, True)
             return
         if state_machine.machine_state != "idle":
             print("machine is busy now!")
             return
+        state_machine.id = self.data_uuid  # 设置菜品id
         if self.data_model == b"\x01":
             self._single_command_handle(self.data_content)  # data_content大小 14
         elif self.data_model == b"\x02":

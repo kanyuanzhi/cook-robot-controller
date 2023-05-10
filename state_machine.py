@@ -1,5 +1,6 @@
 import threading
 import time
+import uuid
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from concurrent.futures import ThreadPoolExecutor
@@ -40,11 +41,14 @@ class StateMachine:
         self.apscheduler = BackgroundScheduler()  # 创建调度器
         self.pool = ThreadPoolExecutor(max_workers=100)  # 创建线程池
 
-        self.machine_state = "idle"  # washing:3/executing:2/pause:1/idle:0
+        self.machine_state = "idle"  # executing:2/pause:1/idle:0
         plc_state.set("machine_state", 0)
 
         self.washing_state = False  # false:0 true:1
         plc_state.set("washing_state", 0)
+
+        self.id = b"\x00" * 16
+        plc_state.set("id", self.id)
 
         self.signals = {}  # 信号字典，{time1:[s1,s2],time2:[s1]}
         self.signal_is_finished = {}  # 信号完成字典， {time1:false,time2:true}
@@ -93,8 +97,11 @@ class StateMachine:
             return
         self.machine_state = "executing"  # 状态机进入执行指令状态
         plc_state.set("machine_state", 2)
+        plc_state.set("id", self.id)
         self.apscheduler.add_job(self.__write, args=(), trigger="interval", seconds=0.05, id="write")  # 添加一个写任务
         self.executing_initial_time = time.time()  # 指令执行的初始时间设置为当前时间
+        print("{}开始执行{}{}".format("*" * 15, "*" * 15, uuid.UUID(bytes=self.id)))
+        logger.info("{}开始执行{}{}".format("*" * 15, "*" * 15, uuid.UUID(bytes=self.id)))
 
     def stop(self):  # 停机重置
         self.machine_state = "idle"  # 状态机进入挂起状态
@@ -108,8 +115,8 @@ class StateMachine:
         self.apscheduler.get_job("write").remove()  # 移除写任务
         plc_state.set("time", 0)  # 执行时间置零
         self.signals_number = 0  # 信号总数置零
-        print("执行完毕或停机重置\n" + "*" * 50)
-        logger.info("执行完毕或停机重置\n" + "*" * 50)
+        print("{}执行完毕或停机重置".format("*" * 15))
+        logger.info("{}执行完毕或停机重置".format("*" * 15))
 
     def pause(self):  # 只暂停写任务
         self.pause_time = time.time()

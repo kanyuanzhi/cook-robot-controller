@@ -8,6 +8,7 @@ import socket
 import time
 import configparser
 
+
 # socket.setdefaulttimeout(1)
 
 class PLCState:
@@ -20,7 +21,10 @@ class PLCState:
 
     def get(self, number):
         if number not in self._status:
-            return 0
+            if number == "id":
+                return b"\x00" * 16
+            else:
+                return 0
         else:
             return self._status[number]
 

@@ -55,12 +55,12 @@ class StateResponsePacker:
         self.data_info += struct.pack(">I", self.count)  # DATA_NO, 4 bytes
         self.data_info += model  # DATA_MODEL, 1 byte
         self.data_info += b"\x00\x00"
+        self.data_info += get_state("id")  # 16bytes
         self.data_info += struct.pack(">I", int(time()))  # DATA_DATETIME, 4 bytes
 
         state = {
             "time": get_state("time"),
             "machine_state": get_state("machine_state"),
-
             "washing_state": get_state("washing_state"),
 
             "y_reset_control_word": get_state("DD0"),
@@ -116,9 +116,9 @@ class StateResponsePacker:
 
         for key in state:
             try:
-                self.data_content += struct.pack(">H", state[key])
+                self.data_content += struct.pack(">H", state[key])  # 2 bytes
             except Exception as e:
                 self.data_content += struct.pack(">H", 0)
-        self.msg += struct.pack(">I", 14 + len(state) * 2)  # DATA_LENGTH, 4 bytes
+        self.msg += struct.pack(">I", 30 + len(state) * 2)  # DATA_LENGTH, 4 bytes
         self.msg += self.data_info
         self.msg += self.data_content
